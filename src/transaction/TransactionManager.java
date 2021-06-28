@@ -15,7 +15,15 @@ public interface TransactionManager extends Remote {
     public boolean dieNow()
 	throws RemoteException;
 
+    public void ping() throws RemoteException;
+    
+	public void enlist(int xid, ResourceManager rm) throws RemoteException;
 
+    public boolean commit(int xid) throws InvalidTransactionException, RemoteException;
+
+    public void start(int xid) throws RemoteException;
+
+	
     /** The RMI name a TransactionManager binds to. */
     public static final String RMIName = "TM";
 }

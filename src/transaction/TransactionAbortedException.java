@@ -1,5 +1,7 @@
 package transaction;
 
+import java.rmi.*;
+
 
 /**
  * A problem occurred that caused the transaction to abort.  Perhaps

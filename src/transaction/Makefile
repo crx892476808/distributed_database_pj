@@ -4,6 +4,7 @@ PATH = /usr/bin
 all : server client
 DSTPATH = $(PROJECTROOT)/../bin
 CLASSPATH = $(DSTPATH)/transaction
+CONFPATH = $(PROJECTROOT)/../conf
 vpath %.class $(DSTPATH)
 
 server : $(CLASSPATH)/ResourceManager.class \

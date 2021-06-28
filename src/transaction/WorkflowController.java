@@ -1,5 +1,7 @@
 package transaction;
 
+import lockmgr.DeadlockException;
+
 import java.rmi.*;
 import java.util.*;
 
@@ -88,9 +90,9 @@ public interface WorkflowController extends Remote {
      * @throws InvalidTransactionException if transaction id is invalid.
      */
     public boolean addFlight(int xid, String flightNum, int numSeats, int price)
-	throws RemoteException,
-	       TransactionAbortedException,
-	       InvalidTransactionException;
+			throws RemoteException,
+			TransactionAbortedException,
+			InvalidTransactionException, DeadlockException;
     /**
      * Delete an entire flight.
      * Should fail if a customer has a reservation on this flight.
@@ -227,9 +229,9 @@ public interface WorkflowController extends Remote {
      * @throws InvalidTransactionException if transaction id is invalid.
      */
     public int queryFlight(int xid, String flightNum)
-	throws RemoteException,
-	       TransactionAbortedException,
-	       InvalidTransactionException;
+			throws RemoteException,
+			TransactionAbortedException,
+			InvalidTransactionException, DeadlockException;
 
     /** Return the price of a seat on this flight. Return -1 if flightNum==null or doesn't exist.*/
     public int queryFlightPrice(int xid, String flightNum)
@@ -299,27 +301,6 @@ public interface WorkflowController extends Remote {
 	throws RemoteException,
 	       TransactionAbortedException,
 	       InvalidTransactionException;
-
-    /**
-     * Reserve an entire itinerary on behalf of this customer.
-     *
-     * @param xid id of transaction.
-     * @param custName name of customer.
-     * @param flightNumList list of String flight numbers.
-     * @param location location of car & hotel, if needed.
-     * @param needCar whether itinerary includes a car reservation.
-     * @param needRoom whether itinerary includes a hotel reservation.
-     * @return true on success, false on failure. (Any needed flights/car/room doesn't exist or not available...)
-     *
-     * @throws RemoteException on communications failure.
-     * @throws TransactionAbortedException if transaction was aborted.
-     * @throws InvalidTransactionException if transaction id is invalid.
-     */
-    public boolean reserveItinerary(int xid, String custName, List flightNumList, String location, boolean needCar, boolean needRoom)
-	throws RemoteException,
-	       TransactionAbortedException,
-	       InvalidTransactionException;
-
 
     //////////
     // TECHNICAL/TESTING INTERFACE
