@@ -48,9 +48,12 @@ public class Client {
 
             int remainSeats = wc.queryFlight(xid, "347");
 
+            //wc.addRooms(xid, "Guangdong", 300,50);
+            int remainRooms = wc.queryRooms(xid, "Guangdong");
             wc.commit(xid);
 
-            System.out.println("Flight 347 has " + remainSeats + "seats");
+            //System.out.println("Flight 347 has " + remainSeats + "seats");
+            System.out.println("Hotel in Guangdong has " + remainRooms + " rooms");
 
 //            example code for clinets
 //            if (!wc.addFlight(xid, "347", 230, 999)) {

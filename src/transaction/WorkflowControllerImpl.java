@@ -86,7 +86,7 @@ public class WorkflowControllerImpl
             TransactionAbortedException,
             InvalidTransactionException {
         tm.commit(xid);
-        System.out.println("Committing");
+        System.out.println("WC Committing");
         return true;
     }
 
@@ -120,7 +120,8 @@ public class WorkflowControllerImpl
     public boolean addRooms(int xid, String location, int numRooms, int price)
             throws RemoteException,
             TransactionAbortedException,
-            InvalidTransactionException {
+            InvalidTransactionException, DeadlockException {
+        rmRooms.insert(xid, ResourceManager.TableNameRooms, new Room(location, price, numRooms, numRooms));
         roomscounter += numRooms;
         roomsprice = price;
         return true;
@@ -175,7 +176,7 @@ public class WorkflowControllerImpl
             InvalidTransactionException, DeadlockException {
         //System.out.println(flightcounter==null);
         System.out.println("querying...");
-        Flight result = (Flight) rmFlights.query(xid,"FLIGHTS",flightNum);
+        Flight result = (Flight) rmFlights.query(xid,ResourceManager.TableNameFlights,flightNum);
         return result.numAvail;
         //return flightcounter;
     }
@@ -190,8 +191,11 @@ public class WorkflowControllerImpl
     public int queryRooms(int xid, String location)
             throws RemoteException,
             TransactionAbortedException,
-            InvalidTransactionException {
-        return roomscounter;
+            InvalidTransactionException, DeadlockException {
+        System.out.println("WC querying...");
+        Room result = (Room) rmRooms.query(xid, ResourceManager.TableNameRooms, location);
+        return result.numAvail;
+        //return roomscounter;
     }
 
     public int queryRoomsPrice(int xid, String location)

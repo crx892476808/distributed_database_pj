@@ -43,24 +43,22 @@ public class TransactionManagerImpl
                 returnFlag = false;
                 break;
             }
-            rm.commit(xid);
         }
-        return true;
+        if(returnFlag)
+            for(ResourceManager rm : transIdToRM.get(xid))
+                rm.commit(xid);
+        return returnFlag;
 	}
 
     public void ping() throws RemoteException {
     }
 
     public void enlist(int xid, ResourceManager rm) throws RemoteException {
-        System.out.println("debug TM 55");
         if (!transIdToRM.containsKey(xid)) {
             transIdToRM.put(xid, new ArrayList<ResourceManager>());
         }
         //transIdToRM.computeIfAbsent(xid, k -> new ArrayList<ResourceManager>()); //if null new an ArrayList
-        System.out.println("debug TM 57");
-        System.out.println("debug "+(transIdToRM.get(xid)==null));
         transIdToRM.get(xid).add(rm);
-        System.out.println("debug TM 55");
     }
 
     public TransactionManagerImpl() throws RemoteException {

@@ -124,9 +124,9 @@ public interface WorkflowController extends Remote {
      * @see #addFlight
      */
     public boolean addRooms(int xid, String location, int numRooms, int price)
-	throws RemoteException,
-	       TransactionAbortedException,
-	       InvalidTransactionException;
+			throws RemoteException,
+			TransactionAbortedException,
+			InvalidTransactionException, DeadlockException;
     /**
      * Delete rooms from a location.
      * This subtracts from both the toal and the available room count
@@ -241,9 +241,9 @@ public interface WorkflowController extends Remote {
 
     /** Return the number of rooms available at a location. */
     public int queryRooms(int xid, String location)
-	throws RemoteException,
-	       TransactionAbortedException,
-	       InvalidTransactionException;
+			throws RemoteException,
+			TransactionAbortedException,
+			InvalidTransactionException, DeadlockException;
 
     /** Return the price of rooms at this location. */
     public int queryRoomsPrice(int xid, String location)

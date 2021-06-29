@@ -298,7 +298,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         return lm;
     }
 
-    protected Hashtable tables = new Hashtable();
+    protected Hashtable tables = new Hashtable(); // xid -> xidtables
 
     protected RMTable loadTable(File file)
     {
@@ -532,7 +532,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         ResourceItem item = table.get(key);
         if (item != null && !item.isDeleted())
         {
-            table.lock(key, LockManager.READ);
+            table.lock(key, LockManager.READ); //why lock here ?
             if (!storeTable(table, new File("data/" + xid + "/" + tablename)))
             {
                 throw new RemoteException("System Error: Can't write table to disk!");
@@ -636,22 +636,18 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
     public boolean insert(int xid, String tablename, ResourceItem newItem) throws DeadlockException,
             InvalidTransactionException, RemoteException
     {
-
         if (xid < 0)
         {
             throw new InvalidTransactionException(xid, "Xid must be positive.");
         }
-
         try
         {
-
             synchronized (xids)
             {
                 xids.add(new Integer(xid));
                 storeTransactionLogs(xids);
             }
             getTransactionManager().enlist(xid, this);
-            System.out.println("debug RM654");
         }
         catch (TransactionManagerUnaccessibleException e)
         {
@@ -798,25 +794,26 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         {
             synchronized (xidtables)
             {
-                for (Iterator iter = xidtables.entrySet().iterator(); iter.hasNext();)
+                for (Iterator iter = xidtables.entrySet().iterator(); iter.hasNext();) // find all tables, iter points to a table
                 {
-                    Map.Entry entry = (Map.Entry) iter.next();
+                    //commit all ? why ?
+                    Map.Entry entry = (Map.Entry) iter.next(); // entry: a table
                     RMTable xtable = (RMTable) entry.getValue();
                     RMTable table = getTable(xtable.getTablename());
-                    for (Iterator iter2 = xtable.keySet().iterator(); iter2.hasNext();)
+                    for (Iterator iter2 = xtable.keySet().iterator(); iter2.hasNext();) // iterate in xtable
                     {
-                        Object key = iter2.next();
+                        Object key = iter2.next(); // iter2 points to an entry
                         ResourceItem item = xtable.get(key);
                         if (item.isDeleted())
                             table.remove(item);
                         else
                             table.put(item);
                     }
-                    if (!storeTable(table, new File("data/" + entry.getKey())))
+                    if (!storeTable(table, new File("data/" + entry.getKey()))) // store the table
                         throw new RemoteException("Can't write table to disk");
                     new File("data/" + xid + "/" + entry.getKey()).delete();
                 }
-                new File("data/" + xid).delete();
+                new File("data/" + xid).delete(); // delete this xid, why?
                 tables.remove(new Integer(xid));
             }
         }
