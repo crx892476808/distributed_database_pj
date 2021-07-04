@@ -254,7 +254,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
     {
         try
         {
-            Thread.sleep(500);
+            Thread.sleep(500); // Thread.sleep(long millis); here 500ms
         }
         catch (InterruptedException e)
         {
@@ -781,7 +781,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         return true;
     }
 
-    public void commit(int xid) throws InvalidTransactionException, RemoteException
+    public boolean commit(int xid) throws InvalidTransactionException, RemoteException
     {
         if (dieTime.equals("BeforeCommit"))
             dieNow();
@@ -813,7 +813,6 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
                         throw new RemoteException("Can't write table to disk");
                     new File("data/" + xid + "/" + entry.getKey()).delete();
                 }
-                new File("data/" + xid).delete(); // delete this xid, why?
                 tables.remove(new Integer(xid));
             }
         }
@@ -825,6 +824,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         {
             xids.remove(new Integer(xid));
         }
+        return true;
     }
 
     public void abort(int xid) throws InvalidTransactionException, RemoteException

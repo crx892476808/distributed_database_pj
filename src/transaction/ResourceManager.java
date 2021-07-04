@@ -64,7 +64,7 @@ public interface ResourceManager extends Remote {
 	public boolean prepare(int xid) throws InvalidTransactionException,
 			RemoteException;
 
-	public void commit(int xid) throws InvalidTransactionException,
+	public boolean commit(int xid) throws InvalidTransactionException,
 			RemoteException;
 
 	public void abort(int xid) throws InvalidTransactionException,

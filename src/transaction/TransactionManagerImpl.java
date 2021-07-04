@@ -1,5 +1,6 @@
 package transaction;
 
+import java.io.File;
 import java.rmi.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,11 +10,27 @@ import java.util.HashMap;
  * <p>
  * Description: toy implementation of the TM
  */
-
+class RMWithStatus{
+    public ResourceManager rm;
+    public String rmStatus;
+    RMWithStatus(ResourceManager rm, String rmStatus){
+        this.rm = rm;
+        this.rmStatus = rmStatus;
+    }
+}
 public class TransactionManagerImpl
         extends java.rmi.server.UnicastRemoteObject
         implements TransactionManager {
-    protected HashMap<Integer, ArrayList<ResourceManager>> transIdToRM = new HashMap<>(); //mapping: xid -> RM
+    protected HashMap<Integer, ArrayList<RMWithStatus>> transIdToRMWithStatus = new HashMap<>(); //mapping: xid -> RM
+    protected HashMap<Integer, String> transIdToStatus = new HashMap<>(); //mapping: xid -> Status
+    public static final String statusInitiated = "Initiated";
+    public static final String statusPreparing = "Preparing";
+    public static final String statusCommitted = "Committed";
+    public static final String statusAborted = "Aborted";
+    public static final String rmStatusInitiated = "Initiated";
+    public static final String rmStatusPrepared = "Prepared";
+    public static final String rmStatusCommitted = "Committed";
+    public static final String rmStatusAborted = "Aborted";
 
     public static void main(String args[]) {
         System.setSecurityManager(new RMISecurityManager());
@@ -37,28 +54,56 @@ public class TransactionManagerImpl
 
 
     public boolean commit(int xid) throws InvalidTransactionException, RemoteException {
-        boolean returnFlag = true;
-        for (ResourceManager rm : transIdToRM.get(xid)) {
-            if(!rm.prepare(xid)) {
-                returnFlag = false;
+        System.out.println("TM committing..."); // For debug
+        transIdToStatus.replace(xid, statusPreparing); //change status to preparing before sending preparing message
+        boolean allRMPrepared = true;
+        for(int i = 0;i != transIdToRMWithStatus.get(xid).size();i++) {
+            if(!transIdToRMWithStatus.get(xid).get(i).rm.prepare(xid)){
+                allRMPrepared = false;
                 break;
             }
+            transIdToRMWithStatus.get(xid).get(i).rmStatus = rmStatusPrepared; //mark cohort as PREPARED
         }
-        if(returnFlag)
-            for(ResourceManager rm : transIdToRM.get(xid))
-                rm.commit(xid);
-        return returnFlag;
+        if(!allRMPrepared){
+            ;//not all prepared, expection handler
+        }
+
+        //change status to COMMITTED and send COMMIT message
+        boolean allRMAcked = true;
+        transIdToStatus.replace(xid, statusCommitted);
+        for(int i = 0;i != transIdToRMWithStatus.get(xid).size();i++){
+            if(!transIdToRMWithStatus.get(xid).get(i).rm.commit(xid)){
+                allRMAcked = false; // committed failed ,expection handler ,may in fact considering timeout
+                break;
+            }
+            transIdToRMWithStatus.get(xid).get(i).rmStatus = rmStatusCommitted;
+        }
+        if(!allRMAcked){
+            ; //not all Acked, expection handler
+        }
+        System.out.println("size="+transIdToRMWithStatus.get(xid).size());
+        for (RMWithStatus rmWithStatus: transIdToRMWithStatus.get(xid)){
+            System.out.println(rmWithStatus.rmStatus);
+        }
+
+        //when all cohorts have acked, delete entry of transaction from protocol database
+        transIdToStatus.remove(xid);
+        transIdToRMWithStatus.remove(xid);
+        new File("data/" + xid).delete();
+
+        return allRMAcked;
 	}
 
     public void ping() throws RemoteException {
     }
 
     public void enlist(int xid, ResourceManager rm) throws RemoteException {
-        if (!transIdToRM.containsKey(xid)) {
-            transIdToRM.put(xid, new ArrayList<ResourceManager>());
+
+        if (!transIdToRMWithStatus.containsKey(xid)) {
+            transIdToRMWithStatus.put(xid, new ArrayList<RMWithStatus>());
         }
-        //transIdToRM.computeIfAbsent(xid, k -> new ArrayList<ResourceManager>()); //if null new an ArrayList
-        transIdToRM.get(xid).add(rm);
+        RMWithStatus rmWithStatus = new RMWithStatus(rm, rmStatusInitiated);
+        transIdToRMWithStatus.get(xid).add(rmWithStatus);
     }
 
     public TransactionManagerImpl() throws RemoteException {
@@ -72,6 +117,8 @@ public class TransactionManagerImpl
     }
 
     public void start(int xid) throws RemoteException {
+        //Status: Initiated
+        transIdToStatus.put(xid, statusInitiated);
     }
 
 }
