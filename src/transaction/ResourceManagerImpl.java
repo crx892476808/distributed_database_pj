@@ -78,6 +78,10 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
 
     protected String dieTime;
 
+    protected HashMap<String, String> RMINameToTableName = new HashMap<>();
+
+    protected String myTableName = null;
+
     public void setDieTime(String time) throws RemoteException
     {
         dieTime = time;
@@ -96,15 +100,21 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
     {
         myRMIName = rmiName;
         dieTime = "NoDie";
-        //added : conf tell when to die
-        Properties prop = new Properties();
-        try {
-            prop.load(new FileInputStream("../../conf/ddb.conf"));
-        }
-        catch (Exception e1) {
-            e1.printStackTrace();
-
-        }
+        //added: Let RM knows it should manipulate which table
+        RMINameToTableName.put(ResourceManager.RMINameFlights, ResourceManager.TableNameFlights);
+        RMINameToTableName.put(ResourceManager.RMINameCars, ResourceManager.TableNameCars);
+        RMINameToTableName.put(ResourceManager.RMINameRooms, ResourceManager.TableNameRooms);
+        RMINameToTableName.put(ResourceManager.RMINameCustomers, ResourceManager.TableNameCustomers);
+        myTableName = RMINameToTableName.get(myRMIName);
+//        //added : conf tell when to die
+//        Properties prop = new Properties();
+//        try {
+//            prop.load(new FileInputStream("../../conf/ddb.conf"));
+//        }
+//        catch (Exception e1) {
+//            e1.printStackTrace();
+//
+//        }
 
         recover();
 
@@ -181,10 +191,11 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
             {
                 continue;
             }
-            getTable(datas[i].getName());
+            if(datas[i].getName().equals(myTableName)) // only handled table is considered
+                getTable(datas[i].getName());
         }
 
-        //xtable
+        //xtable ( temporary table)
         for (int i = 0; i < datas.length; i++)
         {
             if (!datas[i].isDirectory())
@@ -198,14 +209,13 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
             }
             for (int j = 0; j < xdatas.length; j++)
             {
-                RMTable xtable = getTable(xid, xdatas[j].getName());
-                try
-                {
-                    xtable.relockAll();
-                }
-                catch (DeadlockException e)
-                {
-                    throw new RuntimeException(e);
+                if(xdatas[j].getName().equals(myTableName)) {// only handled table is considered
+                    RMTable xtable = getTable(xid, xdatas[j].getName());
+                    try {
+                        xtable.relockAll();
+                    } catch (DeadlockException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         }

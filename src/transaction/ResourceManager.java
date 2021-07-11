@@ -3,6 +3,7 @@ package transaction;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Set;
 
 import lockmgr.DeadlockException;
@@ -16,6 +17,8 @@ import lockmgr.DeadlockException;
  */
 
 public interface ResourceManager extends Remote {
+
+
 	public Set getTransactions() throws RemoteException;
 
 	public Collection getUpdatedRows(int xid, String tablename)
@@ -86,4 +89,6 @@ public interface ResourceManager extends Remote {
 	public static final String TableNameCars = "CARS";
 
 	public static final String TableNameCustomers = "CUSTOMERS";
+
+
 }

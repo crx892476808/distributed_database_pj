@@ -153,12 +153,12 @@ public class TransactionManagerImpl
                     transIdtoRMName.remove(xid);
                     transIdToStatus.remove(xid);
                     new File("data/" + xid).delete();
-                    return;
                 }
             }
             catch(Exception e){
                 e.printStackTrace();
             }
+            return;
         }
 
         // check if we need to commit when rm enlist during recovering
@@ -166,7 +166,7 @@ public class TransactionManagerImpl
                 transIdtoRMName.get(xid).get(rm.getID()).rmStatus.equals(rmStatusPrepared) &&
                 transIdToStatus.containsKey(xid) && transIdToStatus.get(xid).equals(statusCommitted)){
             try{
-                System.out.println("recommitting " + xid + " when enlisting " + rm.getID() + " due to" +rm.getID()+ " recover");
+                System.out.println("recommitting transaction " + xid + " when enlisting " + rm.getID() + " due to" +rm.getID()+ " recover");
                 rm.commit(xid);
                 transIdtoRMName.get(xid).get(rm.getID()).rmStatus = rmStatusCommitted;
                 //check if all rm are committed
@@ -177,17 +177,22 @@ public class TransactionManagerImpl
                         break;
                     }
                 }
+                //debug
+                for(String RMName : transIdtoRMName.get(xid).keySet()){
+                    System.out.println(RMName + " " + transIdtoRMName.get(xid).get(RMName).rmStatus);
+                }
+                //debug end
                 if(allCommitted){
                     transIdtoRMName.remove(xid);
                     transIdToStatus.remove(xid);
                     new File("data/" + xid).delete();
-                    return;
+
                 }
             }
             catch (Exception e){
                 e.printStackTrace();
             }
-
+            return;
         }
 
         //normal enlist

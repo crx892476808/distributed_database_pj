@@ -59,18 +59,29 @@ public class Client {
 //            System.out.println("Hotel in Guangdong has " + remainRooms + " rooms");
 //            //Test: end
 
-            //Test: Add flight with BeforePrepare errors
-            wc.reconnect();
-            //wc.dieRMBeforeCommit(ResourceManager.RMINameFlights);
+//            //Test: Add flight with BeforeCommit errors
+//            //wc.reconnect();
+//            wc.dieRMBeforeCommit(ResourceManager.RMINameFlights);
+//            wc.dieRMBeforeCommit(ResourceManager.RMINameRooms);
+//            int xid = wc.start();
+//            System.out.println(xid);
+//            //wc.dieRMBeforePrepare(ResourceManager.RMINameFlights);
+//            wc.addRooms(xid,"b",2,2);
+//            wc.addFlight(xid, "2", 2, 2);
+//            //wc.deleteFlight(xid, "349");
+//            //int remainSeats = wc.queryFlight(xid, "349");
+//            //System.out.println("Flight 347 has " + remainSeats + "seats");
+//            wc.commit(xid);
+//            //Test: end
+
+            //TEST: FREE QUERY
             int xid = wc.start();
-            System.out.println(xid);
-            //wc.dieRMBeforePrepare(ResourceManager.RMINameFlights);
-            //wc.addFlight(xid, "349", 232, 1001);
-            //wc.deleteFlight(xid, "349");
-            int remainSeats = wc.queryFlight(xid, "349");
-            System.out.println("Flight 347 has " + remainSeats + "seats");
+            int remainSeats = wc.queryFlight(xid, "2");
+            System.out.println("Flight 2 has " + remainSeats + " seats");
+            int remainRooms = wc.queryRooms(xid, "b");
+            System.out.println("Hotel in b has " + remainRooms + " rooms");
             wc.commit(xid);
-            //Test: end
+            //TEST: Free query end
 
 
 
