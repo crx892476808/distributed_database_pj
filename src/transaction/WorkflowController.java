@@ -2,6 +2,7 @@ package transaction;
 
 import lockmgr.DeadlockException;
 
+import java.io.IOException;
 import java.rmi.*;
 import java.util.*;
 
@@ -54,9 +55,9 @@ public interface WorkflowController extends Remote {
      * @throws InvalidTransactionException if transaction id is invalid.
      */
     public boolean commit(int xid)
-	throws RemoteException,
-	       TransactionAbortedException,
-	       InvalidTransactionException;
+			throws IOException,
+			TransactionAbortedException,
+			InvalidTransactionException, ClassNotFoundException;
     /**
      * Abort transaction.
      *
@@ -106,9 +107,9 @@ public interface WorkflowController extends Remote {
      * @throws InvalidTransactionException if transaction id is invalid.
      */
     public boolean deleteFlight(int xid, String flightNum)
-	throws RemoteException,
-	       TransactionAbortedException,
-	       InvalidTransactionException;
+            throws RemoteException,
+            TransactionAbortedException,
+            InvalidTransactionException, DeadlockException;
 
     /**
      * Add rooms to a location.

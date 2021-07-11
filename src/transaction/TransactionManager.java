@@ -1,5 +1,6 @@
 package transaction;
 
+import java.io.IOException;
 import java.rmi.*;
 
 /** 
@@ -19,7 +20,7 @@ public interface TransactionManager extends Remote {
     
 	public void enlist(int xid, ResourceManager rm) throws RemoteException;
 
-    public boolean commit(int xid) throws InvalidTransactionException, RemoteException;
+    public boolean commit(int xid) throws InvalidTransactionException, IOException, ClassNotFoundException;
 
     public void start(int xid) throws RemoteException;
 

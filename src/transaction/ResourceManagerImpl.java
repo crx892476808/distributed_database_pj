@@ -9,14 +9,7 @@ import java.io.ObjectOutputStream;
 import java.rmi.Naming;
 import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 import lockmgr.DeadlockException;
 import lockmgr.LockManager;
@@ -29,6 +22,11 @@ import lockmgr.LockManager;
 
 public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject implements ResourceManager
 {
+    HashMap<Integer, String> transIdToStatus  = new HashMap<>();
+    public static final String statusInitiated = "Initiated";
+    public static final String statusPrepared = "Prepared";
+    public static final String statusCommitted = "Committed";
+    public static final String statusAborted = "Aborted";
 
     public static void main(String args[]) {
         System.setSecurityManager(new RMISecurityManager());
@@ -53,6 +51,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
             System.out.println(rmiName + " bound");
         } catch (Exception e) {
             System.err.println(rmiName + " not bound:" + e);
+            e.printStackTrace();
             System.exit(1);
         }
     }
@@ -97,12 +96,20 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
     {
         myRMIName = rmiName;
         dieTime = "NoDie";
+        //added : conf tell when to die
+        Properties prop = new Properties();
+        try {
+            prop.load(new FileInputStream("../../conf/ddb.conf"));
+        }
+        catch (Exception e1) {
+            e1.printStackTrace();
+
+        }
 
         recover();
 
         while (!reconnect())
         {
-
             try
             {
                 Thread.sleep(500);
@@ -400,7 +407,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
 
     protected HashSet loadTransactionLogs()
     {
-        File xidLog = new File("data/transactions.log");
+        File xidLog = new File("data/" + myRMIName +"_transactions.log");
         ObjectInputStream oin = null;
         try
         {
@@ -426,7 +433,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
 
     protected boolean storeTransactionLogs(HashSet xids)
     {
-        File xidLog = new File("data/transactions.log");
+        File xidLog = new File("data/" + myRMIName +"_transactions.log");
         xidLog.getParentFile().mkdirs();
         xidLog.getParentFile().mkdirs();
         ObjectOutputStream oout = null;
@@ -770,6 +777,8 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
 
     public boolean prepare(int xid) throws InvalidTransactionException, RemoteException
     {
+        if(!transIdToStatus.containsKey(xid))
+            transIdToStatus.put(xid, statusInitiated);
         if (dieTime.equals("BeforePrepare"))
             dieNow();
         if (xid < 0)
@@ -778,6 +787,8 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         }
         if (dieTime.equals("AfterPrepare"))
             dieNow();
+        if(!transIdToStatus.containsKey(xid))
+            transIdToStatus.replace(xid, statusPrepared);
         return true;
     }
 
@@ -824,6 +835,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         {
             xids.remove(new Integer(xid));
         }
+        transIdToStatus.replace(xid,statusCommitted);
         return true;
     }
 
@@ -845,7 +857,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
                     Map.Entry entry = (Map.Entry) iter.next();
                     new File("data/" + xid + "/" + entry.getKey()).delete();
                 }
-                new File("data/" + xid).delete();
+
                 tables.remove(new Integer(xid));
             }
         }

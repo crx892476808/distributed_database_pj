@@ -36,24 +36,43 @@ public class Client {
 
         try {
             //here starts client controller tests
-            //Test: add filght
+            //Test: add filght and rooms, then query (ordinary transaction handling)
 //            int xid = wc.start();
 //
 //            wc.addFlight(xid, "347", 230, 999);
-//
+//            wc.addRooms(xid, "Guangdong", 300,50);
+//            int remainSeats = wc.queryFlight(xid, "347");
+//            int remainRooms = wc.queryRooms(xid, "Guangdong");
 //            wc.commit(xid);
+            //Test: end
 
-            //Test: query Flight
+//            //Test: query Flight with error
+//            int xid = wc.start();
+//            //wc.dieRMBeforePrepare(ResourceManager.RMINameFlights);
+//            int remainSeats = wc.queryFlight(xid, "347");
+//
+//            //wc.addRooms(xid, "Guangdong", 300,50);
+//            int remainRooms = wc.queryRooms(xid, "Guangdong");
+//            wc.commit(xid);
+//
+//            System.out.println("Flight 347 has " + remainSeats + "seats");
+//            System.out.println("Hotel in Guangdong has " + remainRooms + " rooms");
+//            //Test: end
+
+            //Test: Add flight with BeforePrepare errors
+            wc.reconnect();
+            //wc.dieRMBeforeCommit(ResourceManager.RMINameFlights);
             int xid = wc.start();
-
-            int remainSeats = wc.queryFlight(xid, "347");
-
-            //wc.addRooms(xid, "Guangdong", 300,50);
-            int remainRooms = wc.queryRooms(xid, "Guangdong");
+            System.out.println(xid);
+            //wc.dieRMBeforePrepare(ResourceManager.RMINameFlights);
+            //wc.addFlight(xid, "349", 232, 1001);
+            //wc.deleteFlight(xid, "349");
+            int remainSeats = wc.queryFlight(xid, "349");
+            System.out.println("Flight 347 has " + remainSeats + "seats");
             wc.commit(xid);
+            //Test: end
 
-            //System.out.println("Flight 347 has " + remainSeats + "seats");
-            System.out.println("Hotel in Guangdong has " + remainRooms + " rooms");
+
 
 //            example code for clinets
 //            if (!wc.addFlight(xid, "347", 230, 999)) {

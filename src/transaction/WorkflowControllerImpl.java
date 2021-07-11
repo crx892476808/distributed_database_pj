@@ -2,6 +2,7 @@ package transaction;
 
 import lockmgr.DeadlockException;
 
+import java.io.IOException;
 import java.rmi.Naming;
 import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
@@ -82,9 +83,9 @@ public class WorkflowControllerImpl
     }
 
     public boolean commit(int xid)
-            throws RemoteException,
+            throws IOException,
             TransactionAbortedException,
-            InvalidTransactionException {
+            InvalidTransactionException, ClassNotFoundException {
         tm.commit(xid);
         System.out.println("WC Committing");
         return true;
@@ -111,8 +112,9 @@ public class WorkflowControllerImpl
     public boolean deleteFlight(int xid, String flightNum)
             throws RemoteException,
             TransactionAbortedException,
-            InvalidTransactionException {
-        flightcounter = 0;
+            InvalidTransactionException, DeadlockException {
+        rmFlights.delete(xid,ResourceManager.TableNameFlights,flightNum);
+        flightcounter = 0; // ???
         flightprice = 0;
         return true;
     }
@@ -352,6 +354,14 @@ public class WorkflowControllerImpl
 
     public boolean dieRMBeforePrepare(String who)
             throws RemoteException {
+        if(who.equals( rmCars.getID()))
+            rmCars.setDieTime("BeforePrepare");
+        else if (who.equals(rmCustomers.getID()))
+            rmCars.setDieTime("BeforePrepare");
+        else if(who.equals(rmFlights.getID()))
+            rmFlights.setDieTime("BeforePrepare");
+        else if(who.equals(rmRooms.getID()))
+            rmRooms.setDieTime("BeforePrepare");
         return true;
     }
 
@@ -372,6 +382,14 @@ public class WorkflowControllerImpl
 
     public boolean dieRMBeforeCommit(String who)
             throws RemoteException {
+        if(who.equals( rmCars.getID()))
+            rmCars.setDieTime("BeforeCommit");
+        else if (who.equals(rmCustomers.getID()))
+            rmCars.setDieTime("BeforeCommit");
+        else if(who.equals(rmFlights.getID()))
+            rmFlights.setDieTime("BeforeCommit");
+        else if(who.equals(rmRooms.getID()))
+            rmRooms.setDieTime("BeforeCommit");
         return true;
     }
 
