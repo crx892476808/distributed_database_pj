@@ -372,6 +372,7 @@ public class WorkflowControllerImpl
 
     public boolean dieTMBeforeCommit()
             throws RemoteException {
+        tm.setDieTime("BeforeCommit");
         return true;
     }
 

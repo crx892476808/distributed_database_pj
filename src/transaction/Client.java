@@ -74,13 +74,26 @@ public class Client {
 //            wc.commit(xid);
 //            //Test: end
 
+            //TEST: TM down before commit
+//            wc.dieTMBeforeCommit();
+//            int xid = wc.start();
+//            wc.addFlight(xid, "c", 3, 3);
+//            wc.commit(xid);
+            //TEST: TM down before commit end
+
             //TEST: FREE QUERY
-            int xid = wc.start();
-            int remainSeats = wc.queryFlight(xid, "2");
-            System.out.println("Flight 2 has " + remainSeats + " seats");
-            int remainRooms = wc.queryRooms(xid, "b");
-            System.out.println("Hotel in b has " + remainRooms + " rooms");
-            wc.commit(xid);
+            try {
+                wc.reconnect();
+                int xid = wc.start();
+                int remainSeats = wc.queryFlight(xid, "c");
+                System.out.println("Flight c has " + remainSeats + " seats");
+                //int remainRooms = wc.queryRooms(xid, "b");
+                //System.out.println("Hotel in b has " + remainRooms + " rooms");
+                wc.commit(xid);
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
             //TEST: Free query end
 
 

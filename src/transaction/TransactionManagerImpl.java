@@ -22,7 +22,6 @@ public class TransactionManagerImpl
         extends java.rmi.server.UnicastRemoteObject
         implements TransactionManager {
     protected HashMap<Integer, HashMap<String, RMWithStatus>> transIdtoRMName = new HashMap<>();
-    //protected HashMap<Integer, ArrayList<RMWithStatus>> transIdToRMWithStatus = new HashMap<>(); //mapping: xid -> RM
     protected HashMap<Integer, String> transIdToStatus = new HashMap<>(); //mapping: xid -> Status
     public static final String statusInitiated = "Initiated";
     public static final String statusPreparing = "Preparing";
@@ -34,6 +33,9 @@ public class TransactionManagerImpl
     public static final String rmStatusCommitted = "Committed";
     public static final String rmStatusAborted = "Aborted";
 
+    protected String dieTime = new String();
+    protected  static String myRmiPort;
+
     public static void main(String args[]) {
         System.setSecurityManager(new RMISecurityManager());
 
@@ -43,6 +45,7 @@ public class TransactionManagerImpl
         } else if (!rmiPort.equals("")) {
             rmiPort = "//:" + rmiPort + "/";
         }
+        myRmiPort = rmiPort;
 
         try {
             TransactionManagerImpl obj = new TransactionManagerImpl();
@@ -51,6 +54,57 @@ public class TransactionManagerImpl
         } catch (Exception e) {
             System.err.println("TM not bound:" + e);
             System.exit(1);
+        }
+    }
+
+    public void recover(){
+        File logDir = new File("transLog");
+        if (!logDir.exists()) {
+            logDir.mkdirs();
+        }
+        // get all the log data, resume transIDToStatus and transIdtoRMName
+        File[] logs = logDir.listFiles();
+        for (File log: logs){
+            int xid = Integer.parseInt(log.getName());
+            try {
+                HashMap<String, String> logContent = readTransLog(xid);
+                transIdToStatus.put(xid,logContent.get("TM"));
+                logContent.remove("TM");
+                transIdtoRMName.put(xid,new HashMap<String, RMWithStatus>());
+                for(String rmName: logContent.keySet()){
+                    ResourceManager rm = (ResourceManager)Naming.lookup(myRmiPort + rmName);
+                    RMWithStatus rmWithStatus = new RMWithStatus(rm, logContent.get(rmName));
+                    transIdtoRMName.get(xid).put(rmName, rmWithStatus);
+                }
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+
+        }
+
+
+        // resume previous transaction
+        for(int xid : transIdToStatus.keySet()){
+            String TMstatus = transIdToStatus.get(xid);
+            if(TMstatus.equals(statusPreparing)){ //die before committing, recommit all
+                try {
+                    for (String rmName : transIdtoRMName.get(xid).keySet()) { //recommit all rm, do not consider cascade down
+                        transIdtoRMName.get(xid).get(rmName).rm.commit(xid);
+                        transIdtoRMName.get(xid).get(rmName).rmStatus = rmStatusCommitted;
+                    }
+                    //Must write a completed log record to disk before deletion from protocol database
+                    writeTransLog(xid, statusCompleted, transIdtoRMName.get(xid));
+
+                    //when all cohorts have acked, delete entry of transaction from protocol database
+                    transIdToStatus.remove(xid);
+                    transIdtoRMName.remove(xid);
+                    new File("data/" + xid).delete();
+                }
+                catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -90,8 +144,9 @@ public class TransactionManagerImpl
             new File("data/" + xid).delete();
             return false;
         }
-        writeTransLog(xid, statusCommitted); //must force a commit log record to disk before sending commit message
-
+        writeTransLog(xid, statusCommitted,transIdtoRMName.get(xid)); //must force a commit log record to disk before sending commit message
+        if (dieTime.equals("BeforeCommit"))
+            dieNow();
         //change status to COMMITTED and send COMMIT message
         boolean allRMAcked = true;
         transIdToStatus.replace(xid, statusCommitted);
@@ -118,12 +173,14 @@ public class TransactionManagerImpl
         }
 
         //Must write a completed log record to disk before deletion from protocol database
-        writeTransLog(xid, statusCompleted);
+        writeTransLog(xid, statusCompleted, transIdtoRMName.get(xid));
 
         //when all cohorts have acked, delete entry of transaction from protocol database
         transIdToStatus.remove(xid);
         transIdtoRMName.remove(xid);
         new File("data/" + xid).delete();
+        System.out.println("TM committing finish?"); // For debug
+        deleteTransLog(xid);
         System.out.println("TM committing finish ..."); // For debug
 
         return allRMAcked;
@@ -153,6 +210,7 @@ public class TransactionManagerImpl
                     transIdtoRMName.remove(xid);
                     transIdToStatus.remove(xid);
                     new File("data/" + xid).delete();
+                    deleteTransLog(xid);
                 }
             }
             catch(Exception e){
@@ -186,7 +244,7 @@ public class TransactionManagerImpl
                     transIdtoRMName.remove(xid);
                     transIdToStatus.remove(xid);
                     new File("data/" + xid).delete();
-
+                    deleteTransLog(xid);
                 }
             }
             catch (Exception e){
@@ -203,6 +261,13 @@ public class TransactionManagerImpl
     }
 
     public TransactionManagerImpl() throws RemoteException {
+        recover();
+    }
+
+    public void setDieTime(String time) throws RemoteException
+    {
+        dieTime = time;
+        System.out.println("TM Die time set to : " + time);
     }
 
     public boolean dieNow()
@@ -217,7 +282,15 @@ public class TransactionManagerImpl
         transIdToStatus.put(xid, statusInitiated);
     }
 
-    public void writeTransLog(int xid, String logContent) throws IOException {
+    public void writeTransLog(int xid, String TMstatus, HashMap<String, RMWithStatus> RMIname2RMwithStatus) throws IOException {
+        //content : HashMap<String, String> name2status
+        // name can be "TM", means TM, or can be any RMI Name
+        HashMap<String, String> logContent = new HashMap<>();
+        logContent.put("TM", TMstatus);
+        for(String keyName: RMIname2RMwithStatus.keySet()){
+            String RMStatus = RMIname2RMwithStatus.get(keyName).rmStatus;
+            logContent.put(keyName, RMStatus);
+        }
         File folder = new File("transLog");
         if (!folder.exists())
             folder.mkdirs();
@@ -228,11 +301,18 @@ public class TransactionManagerImpl
         oos.writeObject(logContent);
     }
 
-    public String readTransLog(int xid) throws IOException, ClassNotFoundException {
+    public HashMap<String, String> readTransLog(int xid) throws IOException, ClassNotFoundException {
         File transTMLog = new File("transLog/"+xid);
         ObjectInputStream ois = new ObjectInputStream(new FileInputStream(transTMLog));
-        String fileContent = (String)ois.readObject();
-        return fileContent;
+        HashMap<String, String> logContent = (HashMap<String, String>)ois.readObject();
+        return logContent;
+    }
+
+    public void deleteTransLog(int xid) { // delete the transLog of transaction xid
+        File transTMLog = new File("transLog/"+xid);
+        if(transTMLog.exists())
+            transTMLog.delete();
+        System.out.println("come here for deleting translog");
     }
 
 }
