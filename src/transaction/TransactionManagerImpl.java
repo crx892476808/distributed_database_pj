@@ -105,6 +105,13 @@ public class TransactionManagerImpl
                     e.printStackTrace();
                 }
             }
+            else if(TMstatus.equals(statusCompleted)){ // TM die after commit
+                System.out.println("recover transaction from status completion");
+                transIdToStatus.remove(xid);
+                transIdtoRMName.remove(xid);
+                new File("data/" + xid).delete();
+                deleteTransLog(xid);
+            }
         }
     }
 
@@ -174,6 +181,10 @@ public class TransactionManagerImpl
 
         //Must write a completed log record to disk before deletion from protocol database
         writeTransLog(xid, statusCompleted, transIdtoRMName.get(xid));
+
+        if(dieTime.equals("AfterCommit")){
+            dieNow();
+        }
 
         //when all cohorts have acked, delete entry of transaction from protocol database
         transIdToStatus.remove(xid);
