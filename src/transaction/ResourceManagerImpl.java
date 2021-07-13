@@ -844,6 +844,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         synchronized (xids)
         {
             xids.remove(new Integer(xid));
+            storeTransactionLogs(xids);
         }
         transIdToStatus.replace(xid,statusCommitted);
         return true;

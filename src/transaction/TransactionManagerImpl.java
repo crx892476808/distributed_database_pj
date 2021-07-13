@@ -261,6 +261,7 @@ public class TransactionManagerImpl
     }
 
     public TransactionManagerImpl() throws RemoteException {
+        // let TM recover from previous failure
         recover();
     }
 
