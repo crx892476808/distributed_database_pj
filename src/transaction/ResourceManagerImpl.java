@@ -871,6 +871,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
 
                 tables.remove(new Integer(xid));
             }
+
         }
 
         if (!lm.unlockAll(xid))
@@ -879,7 +880,9 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         synchronized (xids)
         {
             xids.remove(new Integer(xid));
+            storeTransactionLogs(xids);
         }
+        transIdToStatus.replace(xid,statusAborted);
     }
 
     //  test usage

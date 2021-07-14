@@ -366,6 +366,9 @@ public interface WorkflowController extends Remote {
      */
     public boolean dieRMAfterPrepare(String who)
 	throws RemoteException;
+
+	public boolean dieTMBeforePreparing()
+			throws RemoteException;
     /**
      * Sets a flag so that the TM fails after it has received
      * "prepared" messages from all RMs, but before it can log

@@ -87,11 +87,58 @@ public class TransactionManagerImpl
         // resume previous transaction
         for(int xid : transIdToStatus.keySet()){
             String TMstatus = transIdToStatus.get(xid);
-            if(TMstatus.equals(statusPreparing)){ //die before committing, recommit all
+            if(TMstatus.equals(statusPreparing)){ //die beforeCommit(recommit all) or die AfterPreparing(abort all),
                 try {
-                    for (String rmName : transIdtoRMName.get(xid).keySet()) { //recommit all rm, do not consider cascade down
-                        transIdtoRMName.get(xid).get(rmName).rm.commit(xid);
-                        transIdtoRMName.get(xid).get(rmName).rmStatus = rmStatusCommitted;
+                    boolean allRMPrepared = true; // check if beforeCommit or afterPreparing
+                    for (String rmName: transIdtoRMName.get(xid).keySet()){
+                        if(!transIdtoRMName.get(xid).get(rmName).rmStatus.equals(rmStatusPrepared)){
+                            allRMPrepared = false;
+                            break;
+                        }
+                    }
+                    if(allRMPrepared) { //die beforeCommit, commit all
+                        System.out.println("die before commit handling, xid = " + xid);
+                        for (String rmName : transIdtoRMName.get(xid).keySet()) { //recommit all rm, do not consider cascade down
+                            transIdtoRMName.get(xid).get(rmName).rm.commit(xid);
+                            transIdtoRMName.get(xid).get(rmName).rmStatus = rmStatusCommitted;
+                        }
+                        //Must write a completed log record to disk before deletion from protocol database
+                        writeTransLog(xid, statusCompleted, transIdtoRMName.get(xid));
+
+                        //when all cohorts have acked, delete entry of transaction from protocol database
+                        transIdToStatus.remove(xid);
+                        transIdtoRMName.remove(xid);
+                        new File("data/" + xid).delete();
+                        deleteTransLog(xid);
+                    }
+                    else{ //die afterPreparing abort all
+                        System.out.println("die after preparing handling, xid = " + xid);
+                        for(String rmName: transIdtoRMName.get(xid).keySet()) {
+                            try {
+                                transIdtoRMName.get(xid).get(rmName).rm.abort(xid);
+                                transIdtoRMName.get(xid).get(rmName).rmStatus = rmStatusAborted;
+                            }
+                            catch(Exception e){
+                                e.printStackTrace();
+                            }
+                        }
+                        new File("data/" + xid).delete();
+                        deleteTransLog(xid);
+                    }
+                }
+                catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+            else if(TMstatus.equals(statusCommitted)){ //die afterCommit or Before Completion
+                System.out.println("die after commit / before completion handling, xid = " + xid);
+                //commmit those not commit
+                try {
+                    for (String rmName : transIdtoRMName.get(xid).keySet()) { //do not consider cascade failure
+                        if (transIdtoRMName.get(xid).get(rmName).rmStatus.equals(rmStatusPrepared)) {
+                            transIdtoRMName.get(xid).get(rmName).rm.commit(xid);
+                            transIdtoRMName.get(xid).get(rmName).rmStatus = rmStatusCommitted;
+                        }
                     }
                     //Must write a completed log record to disk before deletion from protocol database
                     writeTransLog(xid, statusCompleted, transIdtoRMName.get(xid));
@@ -100,6 +147,7 @@ public class TransactionManagerImpl
                     transIdToStatus.remove(xid);
                     transIdtoRMName.remove(xid);
                     new File("data/" + xid).delete();
+                    deleteTransLog(xid);
                 }
                 catch (Exception e){
                     e.printStackTrace();
@@ -119,6 +167,7 @@ public class TransactionManagerImpl
     public boolean commit(int xid) throws InvalidTransactionException, IOException, ClassNotFoundException {
         //change status to PREPARING before sending preparing message
         System.out.println("TM committing..."); // For debug
+        writeTransLog(xid, statusPreparing, transIdtoRMName.get(xid));
         transIdToStatus.replace(xid, statusPreparing);
         boolean allRMPrepared = true;
         ArrayList<String> notPreparedRMName = new ArrayList<>();
@@ -126,12 +175,13 @@ public class TransactionManagerImpl
             System.out.println(rmName + " preparing...");
             try {
                 transIdtoRMName.get(xid).get(rmName).rm.prepare(xid);
+                transIdtoRMName.get(xid).get(rmName).rmStatus = rmStatusPrepared;//mark cohort as PREPARED
+                writeTransLog(xid, statusPreparing, transIdtoRMName.get(xid));
             }
             catch(Exception e){
                 allRMPrepared = false;
                 notPreparedRMName.add(rmName);
             }
-            transIdtoRMName.get(xid).get(rmName).rmStatus = rmStatusPrepared;//mark cohort as PREPARED
         }
         if(!allRMPrepared){
             //not all prepared, abort all
@@ -149,20 +199,25 @@ public class TransactionManagerImpl
                 }
             }
             new File("data/" + xid).delete();
+            deleteTransLog(xid);
             return false;
         }
-        writeTransLog(xid, statusCommitted,transIdtoRMName.get(xid)); //must force a commit log record to disk before sending commit message
         if (dieTime.equals("BeforeCommit"))
             dieNow();
+        transIdToStatus.replace(xid, statusCommitted);
+        writeTransLog(xid, statusCommitted,transIdtoRMName.get(xid)); //must force a commit log record to disk before sending commit message
+        if(dieTime.equals("AfterCommit")){
+            dieNow();
+        }
         //change status to COMMITTED and send COMMIT message
         boolean allRMAcked = true;
-        transIdToStatus.replace(xid, statusCommitted);
         ArrayList<String> notAckedRMName = new ArrayList<>();
         for(String rmName: transIdtoRMName.get(xid).keySet()) {
             System.out.println(rmName + " committing");
             try {
                 transIdtoRMName.get(xid).get(rmName).rm.commit(xid);
                 transIdtoRMName.get(xid).get(rmName).rmStatus = rmStatusCommitted;
+                writeTransLog(xid, statusCommitted, transIdtoRMName.get(xid));
             }
             catch(Exception e){
                 allRMAcked = false;
@@ -181,10 +236,6 @@ public class TransactionManagerImpl
 
         //Must write a completed log record to disk before deletion from protocol database
         writeTransLog(xid, statusCompleted, transIdtoRMName.get(xid));
-
-        if(dieTime.equals("AfterCommit")){
-            dieNow();
-        }
 
         //when all cohorts have acked, delete entry of transaction from protocol database
         transIdToStatus.remove(xid);
