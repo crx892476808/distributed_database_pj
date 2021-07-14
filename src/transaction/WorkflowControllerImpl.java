@@ -410,6 +410,14 @@ public class WorkflowControllerImpl
 
     public boolean dieRMBeforeAbort(String who)
             throws RemoteException {
+        if(who.equals( rmCars.getID()))
+            rmCars.setDieTime("BeforeAbort");
+        else if (who.equals(rmCustomers.getID()))
+            rmCars.setDieTime("BeforeAbort");
+        else if(who.equals(rmFlights.getID()))
+            rmFlights.setDieTime("BeforeAbort");
+        else if(who.equals(rmRooms.getID()))
+            rmRooms.setDieTime("BeforeAbort");
         return true;
     }
 }

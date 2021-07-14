@@ -200,6 +200,7 @@ public class TransactionManagerImpl
             }
         }
         if(!allRMPrepared){
+            boolean allAborted = true;
             //not all prepared, abort all
             System.out.println("TM aborting...");
             transIdToStatus.replace(xid, statusAborted);
@@ -210,12 +211,17 @@ public class TransactionManagerImpl
                         transIdtoRMName.get(xid).get(rmName).rmStatus = rmStatusAborted;
                     }
                     catch(Exception e){
-                        e.printStackTrace();
+                        //rm may die before abort, rm will enlist after recovering
+                        allAborted = false;
+                        System.out.println(rmName + " die before abort");
+                        //e.printStackTrace();
                     }
                 }
             }
-            new File("data/" + xid).delete();
-            deleteTransLog(xid);
+            if(allAborted) {
+                new File("data/" + xid).delete();
+                deleteTransLog(xid);
+            }
             return false;
         }
         if (dieTime.equals("BeforeCommit"))
@@ -273,7 +279,7 @@ public class TransactionManagerImpl
                 !transIdtoRMName.get(xid).get(rm.getID()).rmStatus.equals(rmStatusAborted) &&
                 transIdToStatus.containsKey(xid) && transIdToStatus.get(xid).equals(statusAborted)) {
             try{
-                System.out.println("Aborting " + xid + "when enlisting " + rm.getID() + " due to rm recover");
+                System.out.println("Aborting " + xid + " when enlisting " + rm.getID() + " due to rm recover");
                 rm.abort(xid);
                 transIdtoRMName.get(xid).get(rm.getID()).rmStatus = rmStatusAborted;
                 //check if all aborted

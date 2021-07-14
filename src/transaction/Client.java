@@ -102,19 +102,29 @@ public class Client {
 //            wc.commit(xid);
             // TEST : RM failure after prepare end
 
+
+            //TEST : RMFlight failure before prepare, RMRooms failure before abort
+            wc.dieRMBeforePrepare(ResourceManager.RMINameFlights);
+            wc.dieRMBeforeAbort(ResourceManager.RMINameRooms);
+            int xid = wc.start();
+            wc.addRooms(xid, "z",26,26);
+            wc.addFlight(xid, "14",14,14);
+            wc.commit(xid);
+            //TEST: RMFlight failure before prepare, RMRooms failure before abort end
+
             //TEST: FREE QUERY
-            try {
-                wc.reconnect();
-                int xid = wc.start();
-                int remainSeats = wc.queryFlight(xid, "13");
-                System.out.println("Flight 13 has " + remainSeats + " seats");
-                //int remainRooms = wc.queryRooms(xid, "b");
-                //System.out.println("Hotel in b has " + remainRooms + " rooms");
-                wc.commit(xid);
-            }
-            catch (Exception e){
-                e.printStackTrace();
-            }
+//            try {
+//                wc.reconnect();
+//                int xid = wc.start();
+//                int remainSeats = wc.queryFlight(xid, "13");
+//                System.out.println("Flight 13 has " + remainSeats + " seats");
+//                //int remainRooms = wc.queryRooms(xid, "b");
+//                //System.out.println("Hotel in b has " + remainRooms + " rooms");
+//                wc.commit(xid);
+//            }
+//            catch (Exception e){
+//                e.printStackTrace();
+//            }
             //TEST: Free query end
 
 
