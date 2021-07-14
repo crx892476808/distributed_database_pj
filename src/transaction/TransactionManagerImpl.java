@@ -179,6 +179,7 @@ public class TransactionManagerImpl
 
 
     public boolean commit(int xid) throws InvalidTransactionException, IOException, ClassNotFoundException {
+
         //change status to PREPARING before sending preparing message
         System.out.println("TM committing..."); // For debug
         if(dieTime.equals("BeforePreparing"))
@@ -269,6 +270,35 @@ public class TransactionManagerImpl
 
         return allRMAcked;
 	}
+
+	public void shouldAbort(int xid){ // called only when rm die after enlist
+        transIdToStatus.replace(xid, statusAborted);
+    }
+
+    public boolean abort(int xid) throws RemoteException{ //abort the transaction
+        boolean allAborted = true;
+        //not all prepared, abort all
+        System.out.println("TM aborting...");
+        transIdToStatus.replace(xid, statusAborted);
+        for(String rmName: transIdtoRMName.get(xid).keySet()) {
+            try {
+                transIdtoRMName.get(xid).get(rmName).rm.abort(xid);
+                transIdtoRMName.get(xid).get(rmName).rmStatus = rmStatusAborted;
+            }
+            catch(Exception e){
+                //rm may die before abort, rm will enlist after recovering
+                allAborted = false;
+                System.out.println(rmName + " die before abort");
+                //e.printStackTrace();
+            }
+        }
+
+        if(allAborted) {
+            new File("data/" + xid).delete();
+            deleteTransLog(xid);
+        }
+        return false;
+    }
 
     public void ping() throws RemoteException {
     }

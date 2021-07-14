@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.rmi.Naming;
 import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
+import java.util.HashMap;
 
 /**
  * Workflow Controller for the Distributed Travel Reservation System.
@@ -27,6 +28,10 @@ public class WorkflowControllerImpl
     protected ResourceManager rmCars = null;
     protected ResourceManager rmCustomers = null;
     protected TransactionManager tm = null;
+
+    public static final String transStatusOK = "OK";
+    public static final String transStatusAborted = "Aborted";
+    protected HashMap<Integer, String> transToStatus = new HashMap<>();
 
     public static void main(String args[]) {
         System.setSecurityManager(new RMISecurityManager());
@@ -75,6 +80,7 @@ public class WorkflowControllerImpl
             //rmRooms = (ResourceManager) Naming.lookup(rmiPort + ResourceManager.RMINameRooms);
             //rmCars = (ResourceManager) Naming.lookup(rmiPort + ResourceManager.RMINameCars);
             //rmCustomers = (ResourceManager) Naming.lookup(rmiPort + ResourceManager.RMINameCustomers);
+            transToStatus.put(xidCounter, transStatusOK);
             tm.start(xidCounter);
         }
         catch (Exception e) {
@@ -86,7 +92,10 @@ public class WorkflowControllerImpl
             throws IOException,
             TransactionAbortedException,
             InvalidTransactionException, ClassNotFoundException {
-        tm.commit(xid);
+        if(transToStatus.get(xid).equals(transStatusOK))
+            tm.commit(xid);
+        else
+            tm.abort(xid);
         System.out.println("WC Committing");
         return true;
     }
@@ -103,9 +112,17 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException, DeadlockException {
-        rmFlights.insert(xid, ResourceManager.TableNameFlights, new Flight(flightNum,price, numSeats, numSeats));
-        flightcounter += numSeats; //???
-        flightprice = price;
+        try {
+            if(transToStatus.get(xid).equals(transStatusAborted))
+                return false;
+            rmFlights.insert(xid, ResourceManager.TableNameFlights, new Flight(flightNum, price, numSeats, numSeats));
+            flightcounter += numSeats; //???
+            flightprice = price;
+        }
+        catch (Exception e){ //rm die after enlist
+            transToStatus.replace(xid, transStatusAborted);
+            return false;
+        }
         return true;
     }
 
@@ -113,7 +130,15 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException, DeadlockException {
-        rmFlights.delete(xid,ResourceManager.TableNameFlights,flightNum);
+        try {
+            if(transToStatus.get(xid).equals(transStatusAborted))
+                return false;
+            rmFlights.delete(xid, ResourceManager.TableNameFlights, flightNum);
+        }
+        catch(Exception e){
+            transToStatus.replace(xid, transStatusAborted);
+            return false;
+        }
         flightcounter = 0; // ???
         flightprice = 0;
         return true;
@@ -123,7 +148,15 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException, DeadlockException {
-        rmRooms.insert(xid, ResourceManager.TableNameRooms, new Room(location, price, numRooms, numRooms));
+        try {
+            if(transToStatus.get(xid).equals(transStatusAborted))
+                return false;
+            rmRooms.insert(xid, ResourceManager.TableNameRooms, new Room(location, price, numRooms, numRooms));
+        }
+        catch (Exception e){
+            transToStatus.replace(xid, transStatusAborted);
+            return false;
+        }
         roomscounter += numRooms;
         roomsprice = price;
         return true;
@@ -177,9 +210,18 @@ public class WorkflowControllerImpl
             TransactionAbortedException,
             InvalidTransactionException, DeadlockException {
         //System.out.println(flightcounter==null);
-        System.out.println("querying...");
-        Flight result = (Flight) rmFlights.query(xid,ResourceManager.TableNameFlights,flightNum);
-        return result.numAvail;
+        System.out.println("WC querying...");
+        try {
+            if (transToStatus.get(xid).equals(transStatusAborted))
+                return -1;
+            Flight result = (Flight) rmFlights.query(xid, ResourceManager.TableNameFlights, flightNum);
+            return result.numAvail;
+        }
+        catch (Exception e){
+            transToStatus.replace(xid, transStatusAborted);
+            return -1;
+        }
+
         //return flightcounter;
     }
 
@@ -195,8 +237,17 @@ public class WorkflowControllerImpl
             TransactionAbortedException,
             InvalidTransactionException, DeadlockException {
         System.out.println("WC querying...");
-        Room result = (Room) rmRooms.query(xid, ResourceManager.TableNameRooms, location);
-        return result.numAvail;
+        try {
+            if (transToStatus.get(xid).equals(transStatusAborted))
+                return -1;
+            Room result = (Room) rmRooms.query(xid, ResourceManager.TableNameRooms, location);
+            return result.numAvail;
+        }
+        catch (Exception e){
+            transToStatus.replace(xid, transStatusAborted);
+            return -1;
+        }
+
         //return roomscounter;
     }
 
@@ -349,6 +400,14 @@ public class WorkflowControllerImpl
 
     public boolean dieRMAfterEnlist(String who)
             throws RemoteException {
+        if(who.equals( rmCars.getID()))
+            rmCars.setDieTime("AfterEnlist");
+        else if (who.equals(rmCustomers.getID()))
+            rmCars.setDieTime("AfterEnlist");
+        else if(who.equals(rmFlights.getID()))
+            rmFlights.setDieTime("AfterEnlist");
+        else if(who.equals(rmRooms.getID()))
+            rmRooms.setDieTime("AfterEnlist");
         return true;
     }
 
