@@ -18,11 +18,11 @@ public interface TransactionManager extends Remote {
 
     public void ping() throws RemoteException;
     
-	public void enlist(int xid, ResourceManager rm) throws RemoteException;
+	public void enlist(int xid, ResourceManager rm) throws IOException;
 
     public boolean commit(int xid) throws InvalidTransactionException, IOException, ClassNotFoundException;
 
-    public void start(int xid) throws RemoteException;
+    public void start(int xid) throws IOException;
 
     public void setDieTime(String time) throws RemoteException;
 

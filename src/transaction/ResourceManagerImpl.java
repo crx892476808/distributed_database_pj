@@ -488,7 +488,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
 
             getTransactionManager().enlist(xid, this);
         }
-        catch (TransactionManagerUnaccessibleException e)
+        catch (TransactionManagerUnaccessibleException | IOException e)
         {
             throw new RemoteException(e.getLocalizedMessage(), e);
         }
@@ -537,7 +537,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
             }
             getTransactionManager().enlist(xid, this);
         }
-        catch (TransactionManagerUnaccessibleException e)
+        catch (TransactionManagerUnaccessibleException | IOException e)
         {
             throw new RemoteException(e.getLocalizedMessage(), e);
         }
@@ -575,7 +575,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
             }
             getTransactionManager().enlist(xid, this);
         }
-        catch (TransactionManagerUnaccessibleException e)
+        catch (TransactionManagerUnaccessibleException | IOException e)
         {
             throw new RemoteException(e.getLocalizedMessage(), e);
         }
@@ -627,7 +627,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
             }
             getTransactionManager().enlist(xid, this);
         }
-        catch (TransactionManagerUnaccessibleException e)
+        catch (TransactionManagerUnaccessibleException | IOException e)
         {
             throw new RemoteException(e.getLocalizedMessage(), e);
         }
@@ -666,7 +666,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
             }
             getTransactionManager().enlist(xid, this);
         }
-        catch (TransactionManagerUnaccessibleException e)
+        catch (TransactionManagerUnaccessibleException | IOException e)
         {
             throw new RemoteException(e.getLocalizedMessage(), e);
         }
@@ -707,7 +707,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
             }
             getTransactionManager().enlist(xid, this);
         }
-        catch (TransactionManagerUnaccessibleException e)
+        catch (TransactionManagerUnaccessibleException | IOException e)
         {
             throw new RemoteException(e.getLocalizedMessage(), e);
         }
@@ -748,7 +748,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
             }
             getTransactionManager().enlist(xid, this);
         }
-        catch (TransactionManagerUnaccessibleException e)
+        catch (TransactionManagerUnaccessibleException | IOException e)
         {
             throw new RemoteException(e.getLocalizedMessage(), e);
         }
@@ -795,10 +795,10 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         {
             throw new InvalidTransactionException(xid, "Xid must be positive.");
         }
-        if (dieTime.equals("AfterPrepare"))
-            dieNow();
         if(!transIdToStatus.containsKey(xid))
             transIdToStatus.replace(xid, statusPrepared);
+        if (dieTime.equals("AfterPrepare"))
+            dieNow();
         return true;
     }
 

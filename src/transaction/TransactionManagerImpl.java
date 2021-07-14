@@ -87,7 +87,21 @@ public class TransactionManagerImpl
         // resume previous transaction
         for(int xid : transIdToStatus.keySet()){
             String TMstatus = transIdToStatus.get(xid);
-            if(TMstatus.equals(statusPreparing)){ //die beforeCommit(recommit all) or die AfterPreparing(abort all),
+            if(TMstatus.equals(statusInitiated)) { //dieBeforePreparing (abort all)
+                System.out.println("die before preparing handling, xid = " + xid);
+                for(String rmName: transIdtoRMName.get(xid).keySet()) {
+                    try {
+                        transIdtoRMName.get(xid).get(rmName).rm.abort(xid);
+                        transIdtoRMName.get(xid).get(rmName).rmStatus = rmStatusAborted;
+                    }
+                    catch(Exception e){
+                        e.printStackTrace();
+                    }
+                }
+                new File("data/" + xid).delete();
+                deleteTransLog(xid);
+            }
+            else if(TMstatus.equals(statusPreparing)){ //die beforeCommit(recommit all) or die AfterPreparing(abort all),
                 try {
                     boolean allRMPrepared = true; // check if beforeCommit or afterPreparing
                     for (String rmName: transIdtoRMName.get(xid).keySet()){
@@ -167,6 +181,8 @@ public class TransactionManagerImpl
     public boolean commit(int xid) throws InvalidTransactionException, IOException, ClassNotFoundException {
         //change status to PREPARING before sending preparing message
         System.out.println("TM committing..."); // For debug
+        if(dieTime.equals("BeforePreparing"))
+            dieNow();
         writeTransLog(xid, statusPreparing, transIdtoRMName.get(xid));
         transIdToStatus.replace(xid, statusPreparing);
         boolean allRMPrepared = true;
@@ -251,8 +267,8 @@ public class TransactionManagerImpl
     public void ping() throws RemoteException {
     }
 
-    public void enlist(int xid, ResourceManager rm) throws RemoteException {
-        // check if we need to abort when rm enlist during recovering
+    public void enlist(int xid, ResourceManager rm) throws IOException {
+        // check if we need to abort when rm enlist during recovering (dieRMBeforePRepare/ dieRMAfterPrepare)
         if(transIdtoRMName.containsKey(xid) && transIdtoRMName.get(xid).containsKey(rm.getID()) &&
                 !transIdtoRMName.get(xid).get(rm.getID()).rmStatus.equals(rmStatusAborted) &&
                 transIdToStatus.containsKey(xid) && transIdToStatus.get(xid).equals(statusAborted)) {
@@ -320,6 +336,7 @@ public class TransactionManagerImpl
             transIdtoRMName.put(xid, new HashMap<String, RMWithStatus>());
         }
         transIdtoRMName.get(xid).put(rm.getID(),new RMWithStatus(rm, rmStatusInitiated));
+        writeTransLog(xid, statusInitiated, transIdtoRMName.get(xid));
     }
 
     public TransactionManagerImpl() throws RemoteException {
@@ -340,9 +357,11 @@ public class TransactionManagerImpl
         // but we still need it to please the compiler.
     }
 
-    public void start(int xid) throws RemoteException {
+    public void start(int xid) throws IOException {
         //Mark transaction's status to Initiated
         transIdToStatus.put(xid, statusInitiated);
+        transIdtoRMName.put(xid, new HashMap<String, RMWithStatus>());
+        writeTransLog(xid, statusInitiated, transIdtoRMName.get(xid));
     }
 
     public void writeTransLog(int xid, String TMstatus, HashMap<String, RMWithStatus> RMIname2RMwithStatus) throws IOException {

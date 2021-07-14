@@ -88,15 +88,26 @@ public class Client {
 //            wc.commit(xid);
             //TEST: TM failure after commit end
 
-
             //TEST: TM failure before preparing
 //            wc.dieTMBeforePreparing();
+//            int xid = wc.start();
+//            wc.addFlight(xid, "12",12,12);
+//            wc.commit(xid);
+            //TEST: TM failure before preparing end
+
+            //TEST : RM failure after prepare
+//            wc.dieRMAfterPrepare(ResourceManager.RMINameFlights);
+//            int xid = wc.start();
+//            wc.addFlight(xid, "13", 13, 13);
+//            wc.commit(xid);
+            // TEST : RM failure after prepare end
+
             //TEST: FREE QUERY
             try {
                 wc.reconnect();
                 int xid = wc.start();
-                int remainSeats = wc.queryFlight(xid, "11");
-                System.out.println("Flight 11 has " + remainSeats + " seats");
+                int remainSeats = wc.queryFlight(xid, "13");
+                System.out.println("Flight 13 has " + remainSeats + " seats");
                 //int remainRooms = wc.queryRooms(xid, "b");
                 //System.out.println("Hotel in b has " + remainRooms + " rooms");
                 wc.commit(xid);
