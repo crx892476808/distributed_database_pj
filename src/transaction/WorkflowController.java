@@ -367,6 +367,7 @@ public interface WorkflowController extends Remote {
     public boolean dieRMAfterPrepare(String who)
 	throws RemoteException;
 
+	/* before state transform from "Initiated" to "Preparing"*/
 	public boolean dieTMBeforePreparing()
 			throws RemoteException;
     /**
