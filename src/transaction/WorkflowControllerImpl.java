@@ -27,6 +27,7 @@ public class WorkflowControllerImpl
     protected ResourceManager rmRooms = null;
     protected ResourceManager rmCars = null;
     protected ResourceManager rmCustomers = null;
+    protected ResourceManager rmReservations = null;
     protected TransactionManager tm = null;
 
     public static final String transStatusOK = "OK";
@@ -390,6 +391,30 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
+        //1 check if flight is full
+        try {
+            Flight f = (Flight) rmFlights.query(xid, ResourceManager.TableNameFlights, flightNum);
+            if(f.numAvail <= 0){
+                transToStatus.replace(xid, transStatusAborted);
+                return false;
+            }
+            f.numAvail = f.numAvail - 1;
+            rmFlights.update(xid, ResourceManager.TableNameFlights, flightNum, f);
+
+            //2 check customer exists ?
+            if(rmCustomers.query(xid,ResourceManager.TableNameCustomers, custName) == null) {
+                transToStatus.replace(xid, transStatusAborted);
+                return false;
+            }
+            //3 : Reserve flight
+            Reservation reservation = new Reservation(custName, Reservation.RESERVATION_TYPE_FLIGHT, flightNum);
+            rmReservations.insert(xid, ResourceManager.TableNameReservations, reservation);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            transToStatus.replace(xid, transStatusAborted);
+            return false;
+        }
         flightcounter--;
         return true;
     }
@@ -437,6 +462,12 @@ public class WorkflowControllerImpl
                     (ResourceManager) Naming.lookup(rmiPort +
                             ResourceManager.RMINameCustomers);
             System.out.println("WC bound to RMCustomers");
+            // added : rmReservations
+            rmReservations =
+                    (ResourceManager) Naming.lookup(rmiPort +
+                            ResourceManager.RMINameReservations);
+            System.out.println("WC bound to RMReservations");
+            //
             tm =
                     (TransactionManager) Naming.lookup(rmiPort +
                             TransactionManager.RMIName);

@@ -105,6 +105,7 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
         RMINameToTableName.put(ResourceManager.RMINameCars, ResourceManager.TableNameCars);
         RMINameToTableName.put(ResourceManager.RMINameRooms, ResourceManager.TableNameRooms);
         RMINameToTableName.put(ResourceManager.RMINameCustomers, ResourceManager.TableNameCustomers);
+        RMINameToTableName.put(ResourceManager.RMINameReservations, ResourceManager.TableNameReservations);
         myTableName = RMINameToTableName.get(myRMIName);
 //        //added : conf tell when to die
 //        Properties prop = new Properties();

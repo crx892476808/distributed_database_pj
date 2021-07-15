@@ -145,16 +145,36 @@ public class Client {
 
             //TEST: add Customer
 //            int xid = wc.start();
-//            wc.newCustomer(xid, "1");
+//            wc.newCustomer(xid, "Eren");
 //            wc.commit(xid);
             //TEST : add Customer end
 
+            //TEST: add Flight
+//            int xid = wc.start();
+//            wc.addFlight(xid, "CA929", 400, 12000);
+//            wc.commit(xid);
+            //TEST: add Flight end
+
             //TEST: delete Customer
-            int xid = wc.start();
-            if(wc.deleteCustomer(xid, "1"))
-                System.out.println("add delete customer finish");
-            wc.commit(xid);
+//            int xid = wc.start();
+//            if(wc.deleteCustomer(xid, "1"))
+//                System.out.println("add delete customer finish");
+//            wc.commit(xid);
             //TEST: delete CUstomer end
+
+            //TEST: query room price
+//            int xid = wc.start();
+//            int rPrice = wc.queryRoomsPrice(xid, "1000");
+//            System.out.println(rPrice);
+//            wc.commit(xid);
+            //TEST: query room price end
+
+            //TEST: reserve Flight
+            String custName = "Eren";
+            int xid = wc.start();
+            wc.reserveFlight(xid, custName, "CA929");
+            wc.commit(xid);
+            //TEST: reserve Flight end
 
             //TEST: FREE QUERY
 //            try {
