@@ -121,13 +121,13 @@ public class Client {
 
             //TEST : addCars
 //            int xid = wc.start();
-//            wc.addCars(xid,"1001",1001,1001);
+//            wc.addCars(xid,"Tokyo",1000,500);
 //            wc.commit(xid);
             //TEST: addCars end
 
             //TEST: addRooms
 //            int xid = wc.start();
-//            wc.addRooms(xid, "1000",1000,1000);
+//            wc.addRooms(xid, "Tokyo",1000,350);
 //            wc.commit(xid);
             //TEST: addRooms end
 
@@ -170,11 +170,32 @@ public class Client {
             //TEST: query room price end
 
             //TEST: reserve Flight
+//            String custName = "Eren";
+//            int xid = wc.start();
+//            wc.reserveFlight(xid, custName, "CA929");
+//            wc.commit(xid);
+            //TEST: reserve Flight end
+
+            //TEST: Reserve Rooms
+//            String custName = "Eren";
+//            int xid = wc.start();
+//            wc.reserveRoom(xid, custName, "Tokyo");
+//            wc.commit(xid);
+            //TEST: Reserve Rooms finish
+
+            //TEST : reserve Car
+//            String custName = "Eren";
+//            int xid = wc.start();
+//            wc.reserveCar(xid, custName, "Tokyo");
+//            wc.commit(xid);
+            //TEST : reserve Car end
+
+            //TEST : query total cost
             String custName = "Eren";
             int xid = wc.start();
-            wc.reserveFlight(xid, custName, "CA929");
+            int totalPrice = wc.queryCustomerBill(xid, custName);
             wc.commit(xid);
-            //TEST: reserve Flight end
+            System.out.println(custName + "'s total price = " + totalPrice);
 
             //TEST: FREE QUERY
 //            try {

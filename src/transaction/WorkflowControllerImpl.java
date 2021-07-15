@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.rmi.Naming;
 import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -382,7 +383,40 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        return 0;
+        try{
+            if (transToStatus.get(xid).equals(transStatusAborted))
+                return -1;
+            //0 check if custname exists
+            if(rmCustomers.query(xid,ResourceManager.TableNameCustomers, custName) == null) {
+                transToStatus.replace(xid, transStatusAborted);
+                return -1;
+            }
+            //1 get all reservations related to custName
+            int totalPrice = 0;
+            ArrayList<Reservation> reservations = (ArrayList<Reservation>) rmReservations.query(xid, ResourceManager.TableNameReservations, Reservation.INDEX_CUSTNAME, custName);
+            // 2 get all the price
+            for(Reservation reservation: reservations){
+                if(reservation.getResvType() == Reservation.RESERVATION_TYPE_FLIGHT){
+                    Flight flight = (Flight) rmFlights.query(xid, ResourceManager.TableNameFlights, reservation.getResvKey());
+                    totalPrice += flight.getPrice();
+                }
+                else if(reservation.getResvType() == Reservation.RESERVATION_TYPE_HOTEL){
+                    Room room = (Room) rmRooms.query(xid, ResourceManager.TableNameRooms, reservation.getResvKey());
+                    totalPrice += room.getPrice();
+                }
+                else if(reservation.getResvType() == Reservation.RESERVATION_TYPE_CAR){
+                    Car car = (Car) rmCars.query(xid, ResourceManager.TableNameCars, reservation.getResvKey());
+                    totalPrice += car.getPrice();
+                }
+            }
+            return totalPrice;
+
+        }
+        catch (Exception e){
+            transToStatus.replace(xid, transStatusAborted);
+            return -1;
+        }
+        //return 0;
     }
 
 
@@ -393,6 +427,8 @@ public class WorkflowControllerImpl
             InvalidTransactionException {
         //1 check if flight is full
         try {
+            if (transToStatus.get(xid).equals(transStatusAborted))
+                return false;
             Flight f = (Flight) rmFlights.query(xid, ResourceManager.TableNameFlights, flightNum);
             if(f.numAvail <= 0){
                 transToStatus.replace(xid, transStatusAborted);
@@ -423,6 +459,33 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
+        try{
+            if (transToStatus.get(xid).equals(transStatusAborted))
+                return false;
+            //1 check car seats available ?
+            Car car = (Car) rmCars.query(xid, ResourceManager.TableNameCars, location);
+            if(car.numAvail <= 0){
+                transToStatus.replace(xid, transStatusAborted);
+                return false;
+            }
+            car.numAvail = car.numAvail - 1;
+            rmCars.update(xid, ResourceManager.TableNameCars, location, car);
+
+            //2 check customer exists ?
+            if(rmCustomers.query(xid,ResourceManager.TableNameCustomers, custName) == null) {
+                transToStatus.replace(xid, transStatusAborted);
+                return false;
+            }
+
+            //3 Reserve Cars
+            Reservation reservation = new Reservation(custName, Reservation.RESERVATION_TYPE_CAR, location);
+            rmReservations.insert(xid, ResourceManager.TableNameReservations, reservation);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            transToStatus.replace(xid, transStatusAborted);
+            return false;
+        }
         carscounter--;
         return true;
     }
@@ -431,6 +494,33 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
+        try{
+            if (transToStatus.get(xid).equals(transStatusAborted))
+                return false;
+            //1 check rooms available ?
+            Room room = (Room) rmRooms.query(xid, ResourceManager.TableNameRooms, location);
+            if(room.numAvail <= 0){
+                transToStatus.replace(xid, transStatusAborted);
+                return false;
+            }
+            room.numAvail = room.numAvail - 1;
+            rmRooms.update(xid, ResourceManager.TableNameCars, location, room);
+
+            //2 check customer exists ?
+            if(rmCustomers.query(xid,ResourceManager.TableNameCustomers, custName) == null) {
+                transToStatus.replace(xid, transStatusAborted);
+                return false;
+            }
+
+            //3 Reserve Rooms
+            Reservation reservation = new Reservation(custName, Reservation.RESERVATION_TYPE_HOTEL, location);
+            rmReservations.insert(xid, ResourceManager.TableNameReservations, reservation);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            transToStatus.replace(xid, transStatusAborted);
+            return false;
+        }
         roomscounter--;
         return true;
     }
