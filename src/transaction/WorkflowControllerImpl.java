@@ -166,6 +166,24 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
+        try {
+            if (transToStatus.get(xid).equals(transStatusAborted))
+                return false;
+            Room r = (Room) rmRooms.query(xid, ResourceManager.TableNameRooms, location);
+            int previousRoomNum = r.getNumRooms();
+            int previousRoomAvail = r.getNumAvail();
+            int newRoomNum = previousRoomNum - numRooms;
+            int newRoomAvail = previousRoomAvail - numRooms;
+            r.setNumRooms(newRoomNum);
+            r.setNumAvail(newRoomAvail);
+            if(newRoomNum < 0 || newRoomAvail < 0)
+                throw new Exception();
+            rmRooms.update(xid,ResourceManager.TableNameRooms, location, r);
+        }
+        catch (Exception e){
+            transToStatus.replace(xid, transStatusAborted);
+            return false;
+        }
         roomscounter = 0;
         roomsprice = 0;
         return true;
@@ -175,6 +193,15 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
+        try {
+            if(transToStatus.get(xid).equals(transStatusAborted))
+                return false;
+            rmCars.insert(xid, ResourceManager.TableNameCars, new Car(location, price, numCars, numCars));
+        }
+        catch (Exception e){
+            transToStatus.replace(xid, transStatusAborted);
+            return false;
+        }
         carscounter += numCars;
         carsprice = price;
         return true;
@@ -184,6 +211,24 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
+        try {
+            if (transToStatus.get(xid).equals(transStatusAborted))
+                return false;
+            Car c = (Car) rmCars.query(xid, ResourceManager.TableNameCars, location);
+            int previousCarNum = c.getNumCars();
+            int previousCarAvail = c.getNumAvail();
+            int newCarNum = previousCarNum - numCars;
+            int newCarAvail = previousCarAvail - numCars;
+            c.setNumCars(newCarNum);
+            c.setNumAvail(newCarAvail);
+            if(newCarNum < 0 || newCarAvail < 0)
+                throw new Exception();
+            rmCars.update(xid,ResourceManager.TableNameCars, location, c);
+        }
+        catch (Exception e){
+            transToStatus.replace(xid, transStatusAborted);
+            return false;
+        }
         carscounter = 0;
         carsprice = 0;
         return true;
@@ -193,6 +238,15 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
+        try {
+            if(transToStatus.get(xid).equals(transStatusAborted))
+                return false;
+            rmCustomers.insert(xid, ResourceManager.TableNameCustomers, new Customer(custName));
+        }
+        catch (Exception e){
+            transToStatus.replace(xid, transStatusAborted);
+            return false;
+        }
         return true;
     }
 
@@ -200,6 +254,15 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
+        try{
+            if(transToStatus.get(xid).equals(transStatusAborted))
+                return false;
+            rmCustomers.delete(xid, ResourceManager.TableNameCustomers, custName);
+        }
+        catch(Exception e){
+            transToStatus.replace(xid, transStatusAborted);
+            return false;
+        }
         return true;
     }
 
@@ -229,7 +292,17 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        return flightprice;
+        System.out.println("WC querying...");
+        try {
+            if (transToStatus.get(xid).equals(transStatusAborted))
+                return -1;
+            Flight result = (Flight) rmFlights.query(xid, ResourceManager.TableNameFlights, flightNum);
+            return result.price;
+        }
+        catch (Exception e){
+            transToStatus.replace(xid, transStatusAborted);
+            return -1;
+        }
     }
 
     public int queryRooms(int xid, String location)
@@ -255,21 +328,53 @@ public class WorkflowControllerImpl
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        return roomsprice;
+        System.out.println("WC querying...");
+        try {
+            if (transToStatus.get(xid).equals(transStatusAborted))
+                return -1;
+            Room result = (Room) rmRooms.query(xid, ResourceManager.TableNameRooms, location);
+            return result.price;
+        }
+        catch (Exception e){
+            transToStatus.replace(xid, transStatusAborted);
+            return -1;
+        }
     }
 
     public int queryCars(int xid, String location)
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        return carscounter;
+        System.out.println("WC querying...");
+        try {
+            if (transToStatus.get(xid).equals(transStatusAborted))
+                return -1;
+            Car result = (Car) rmCars.query(xid, ResourceManager.TableNameCars, location);
+            return result.numAvail;
+        }
+        catch (Exception e){
+            transToStatus.replace(xid, transStatusAborted);
+            return -1;
+        }
+        //return carscounter;
     }
 
     public int queryCarsPrice(int xid, String location)
             throws RemoteException,
             TransactionAbortedException,
             InvalidTransactionException {
-        return carsprice;
+        System.out.println("WC querying...");
+        try {
+            if (transToStatus.get(xid).equals(transStatusAborted))
+                return -1;
+            Car result = (Car) rmCars.query(xid, ResourceManager.TableNameCars, location);
+            return result.getPrice();
+        }
+        catch (Exception e){
+            transToStatus.replace(xid, transStatusAborted);
+            return -1;
+        }
+        //return carsprice;
     }
 
     public int queryCustomerBill(int xid, String custName)

@@ -119,19 +119,56 @@ public class Client {
 //            wc.commit(xid);
             //TEST: RM failure after enlist end
 
+            //TEST : addCars
+//            int xid = wc.start();
+//            wc.addCars(xid,"1001",1001,1001);
+//            wc.commit(xid);
+            //TEST: addCars end
+
+            //TEST: addRooms
+//            int xid = wc.start();
+//            wc.addRooms(xid, "1000",1000,1000);
+//            wc.commit(xid);
+            //TEST: addRooms end
+
+            //TEST: deleteRooms
+//            int xid = wc.start();
+//            wc.deleteRooms(xid,"1000",1);
+//            wc.commit(xid);
+            //TEST: deleteRooms end
+
+            //TEST: delete Cars
+//            int xid = wc.start();
+//            wc.deleteCars(xid, "1001", 1);
+//            wc.commit(xid);
+            //TEST: deleteCars end
+
+            //TEST: add Customer
+//            int xid = wc.start();
+//            wc.newCustomer(xid, "1");
+//            wc.commit(xid);
+            //TEST : add Customer end
+
+            //TEST: delete Customer
+            int xid = wc.start();
+            if(wc.deleteCustomer(xid, "1"))
+                System.out.println("add delete customer finish");
+            wc.commit(xid);
+            //TEST: delete CUstomer end
+
             //TEST: FREE QUERY
-            try {
-                wc.reconnect();
-                int xid = wc.start();
-                int remainSeats = wc.queryFlight(xid, "17");
-                System.out.println("Flight 17 has " + remainSeats + " seats");
-                //int remainRooms = wc.queryRooms(xid, "b");
-                //System.out.println("Hotel in b has " + remainRooms + " rooms");
-                wc.commit(xid);
-            }
-            catch (Exception e){
-                e.printStackTrace();
-            }
+//            try {
+//                wc.reconnect();
+//                int xid = wc.start();
+//                int remainCars = wc.queryCars(xid, "1001");
+//                System.out.println("Room 1001 has " + remainCars + " rooms");
+//                //int remainRooms = wc.queryRooms(xid, "b");
+//                //System.out.println("Hotel in b has " + remainRooms + " rooms");
+//                wc.commit(xid);
+//            }
+//            catch (Exception e){
+//                e.printStackTrace();
+//            }
             //TEST: Free query end
 
 

@@ -2,36 +2,36 @@ package transaction;
 
 import java.io.Serializable;
 
-public class Room implements ResourceItem, Serializable {
+public class Car implements ResourceItem, Serializable {
     public static final String INDEX_LOCATION = "location";
     protected String location;
     protected int price;
-    protected int numRooms;
+    protected int numCars;
     protected int numAvail;
 
     protected boolean isdeleted = false;
 
-    public Room(String location, int price, int numRooms, int numAvail) {
+    public Car(String location, int price, int numRooms, int numAvail) {
         this.location = location;
         this.price = price;
-        this.numRooms = numRooms;
+        this.numCars = numRooms;
         this.numAvail = numAvail;
     }
 
     public String[] getColumnNames() {
-        return new String[]{"location", "price", "numRooms", "numAvail"};
+        return new String[]{"location", "price", "numCars", "numAvail"};
     }
 
     public String[] getColumnValues() {
-        return new String[]{location, "" + price, "" + numRooms, "" + numAvail};
+        return new String[]{location, "" + price, "" + numCars, "" + numAvail};
     }
 
     public void setPrice(int price) {
         this.price = price;
     }
 
-    public void setNumRooms(int numRooms) {
-        this.numRooms = numRooms;
+    public void setNumCars(int numRooms) {
+        this.numCars = numRooms;
     }
 
     public void setNumAvail(int numAvail) {
@@ -50,7 +50,7 @@ public class Room implements ResourceItem, Serializable {
     }
 
     public Object clone(){
-        Room o = new Room(getLocation(), getPrice(), getNumRooms(), getNumAvail());
+        Car o = new Car(getLocation(), getPrice(), getNumCars(), getNumAvail());
         o.isdeleted = isdeleted;
         return o;
     }
@@ -71,8 +71,8 @@ public class Room implements ResourceItem, Serializable {
         return price;
     }
 
-    public int getNumRooms() {
-        return numRooms;
+    public int getNumCars() {
+        return numCars;
     }
 
     public int getNumAvail() {
