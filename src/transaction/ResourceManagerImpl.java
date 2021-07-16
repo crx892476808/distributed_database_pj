@@ -821,6 +821,8 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
                     //commit all ? why ?
                     Map.Entry entry = (Map.Entry) iter.next(); // entry: a table
                     RMTable xtable = (RMTable) entry.getValue();
+                    if(!entry.getKey().equals(myTableName))  //only handle owned table
+                        continue;
                     RMTable table = getTable(xtable.getTablename());
                     for (Iterator iter2 = xtable.keySet().iterator(); iter2.hasNext();) // iterate in xtable
                     {
@@ -867,6 +869,9 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
                 for (Iterator iter = xidtables.entrySet().iterator(); iter.hasNext();)
                 {
                     Map.Entry entry = (Map.Entry) iter.next();
+                    if(!entry.getKey().equals(myTableName))
+                        continue;
+                    System.out.println(entry.getKey() + " deleting...");
                     new File("data/" + xid + "/" + entry.getKey()).delete();
                 }
 

@@ -504,11 +504,12 @@ public class WorkflowControllerImpl
                 return false;
             }
             room.numAvail = room.numAvail - 1;
-            rmRooms.update(xid, ResourceManager.TableNameCars, location, room);
+            rmRooms.update(xid, ResourceManager.TableNameRooms, location, room);
 
             //2 check customer exists ?
             if(rmCustomers.query(xid,ResourceManager.TableNameCustomers, custName) == null) {
                 transToStatus.replace(xid, transStatusAborted);
+                System.out.println("Customer not exist when reserving rooms");
                 return false;
             }
 
@@ -634,6 +635,8 @@ public class WorkflowControllerImpl
             rmFlights.setDieTime("AfterEnlist");
         else if(who.equals(rmRooms.getID()))
             rmRooms.setDieTime("AfterEnlist");
+        else if(who.equals(rmReservations.getID()))
+            rmReservations.setDieTime("AfterEnlist");
         return true;
     }
 
@@ -647,6 +650,8 @@ public class WorkflowControllerImpl
             rmFlights.setDieTime("BeforePrepare");
         else if(who.equals(rmRooms.getID()))
             rmRooms.setDieTime("BeforePrepare");
+        else if(who.equals(rmReservations.getID()))
+            rmReservations.setDieTime("BeforePrepare");
         return true;
     }
 
@@ -660,6 +665,8 @@ public class WorkflowControllerImpl
             rmFlights.setDieTime("AfterPrepare");
         else if(who.equals(rmRooms.getID()))
             rmRooms.setDieTime("AfterPrepare");
+        else if(who.equals(rmReservations.getID()))
+            rmReservations.setDieTime("AfterPrepare");
         return true;
     }
 
@@ -690,6 +697,8 @@ public class WorkflowControllerImpl
             rmFlights.setDieTime("BeforeCommit");
         else if(who.equals(rmRooms.getID()))
             rmRooms.setDieTime("BeforeCommit");
+        else if(who.equals(rmReservations.getID()))
+            rmReservations.setDieTime("BeforeCommit");
         return true;
     }
 
@@ -703,6 +712,8 @@ public class WorkflowControllerImpl
             rmFlights.setDieTime("BeforeAbort");
         else if(who.equals(rmRooms.getID()))
             rmRooms.setDieTime("BeforeAbort");
+        else if(who.equals(rmReservations.getID()))
+            rmReservations.setDieTime("BeforeAbort");
         return true;
     }
 }

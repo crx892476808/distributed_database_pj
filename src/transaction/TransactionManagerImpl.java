@@ -57,7 +57,7 @@ public class TransactionManagerImpl
         }
     }
 
-    public void recover(){
+    public void recover() throws RemoteException {
         File logDir = new File("transLog");
         if (!logDir.exists()) {
             logDir.mkdirs();
@@ -89,17 +89,7 @@ public class TransactionManagerImpl
             String TMstatus = transIdToStatus.get(xid);
             if(TMstatus.equals(statusInitiated)) { //dieBeforePreparing (abort all)
                 System.out.println("die before preparing handling, xid = " + xid);
-                for(String rmName: transIdtoRMName.get(xid).keySet()) {
-                    try {
-                        transIdtoRMName.get(xid).get(rmName).rm.abort(xid);
-                        transIdtoRMName.get(xid).get(rmName).rmStatus = rmStatusAborted;
-                    }
-                    catch(Exception e){
-                        e.printStackTrace();
-                    }
-                }
-                new File("data/" + xid).delete();
-                deleteTransLog(xid);
+                abort(xid);
             }
             else if(TMstatus.equals(statusPreparing)){ //die beforeCommit(recommit all) or die AfterPreparing(abort all),
                 try {
@@ -127,24 +117,14 @@ public class TransactionManagerImpl
                     }
                     else{ //die afterPreparing abort all
                         System.out.println("die after preparing handling, xid = " + xid);
-                        for(String rmName: transIdtoRMName.get(xid).keySet()) {
-                            try {
-                                transIdtoRMName.get(xid).get(rmName).rm.abort(xid);
-                                transIdtoRMName.get(xid).get(rmName).rmStatus = rmStatusAborted;
-                            }
-                            catch(Exception e){
-                                e.printStackTrace();
-                            }
-                        }
-                        new File("data/" + xid).delete();
-                        deleteTransLog(xid);
+                        abort(xid); //abort all
                     }
                 }
                 catch (Exception e){
                     e.printStackTrace();
                 }
             }
-            else if(TMstatus.equals(statusCommitted)){ //die afterCommit or Before Completion
+            else if(TMstatus.equals(statusCommitted)){ //die afterCommit or Before Completion, commit all
                 System.out.println("die after commit / before completion handling, xid = " + xid);
                 //commmit those not commit
                 try {
@@ -205,24 +185,7 @@ public class TransactionManagerImpl
             //not all prepared, abort all
             System.out.println("TM aborting...");
             transIdToStatus.replace(xid, statusAborted);
-            for(String rmName: transIdtoRMName.get(xid).keySet()) {
-                if(!notPreparedRMName.contains(rmName)) {
-                    try {
-                        transIdtoRMName.get(xid).get(rmName).rm.abort(xid);
-                        transIdtoRMName.get(xid).get(rmName).rmStatus = rmStatusAborted;
-                    }
-                    catch(Exception e){
-                        //rm may die before abort, rm will enlist after recovering
-                        allAborted = false;
-                        System.out.println(rmName + " die before abort");
-                        //e.printStackTrace();
-                    }
-                }
-            }
-            if(allAborted) {
-                new File("data/" + xid).delete();
-                deleteTransLog(xid);
-            }
+            abort(xid);
             return false;
         }
         if (dieTime.equals("BeforeCommit"))
@@ -294,6 +257,9 @@ public class TransactionManagerImpl
         }
 
         if(allAborted) {
+            System.out.println("From TM: Transaction " + xid + " abort finish");
+            transIdToStatus.remove(xid);
+            transIdtoRMName.remove(xid);
             new File("data/" + xid).delete();
             deleteTransLog(xid);
         }

@@ -191,11 +191,32 @@ public class Client {
             //TEST : reserve Car end
 
             //TEST : query total cost
-            String custName = "Eren";
+//            String custName = "Eren";
+//            int xid = wc.start();
+//            int totalPrice = wc.queryCustomerBill(xid, custName);
+//            wc.commit(xid);
+//            System.out.println(custName + "'s total price = " + totalPrice);
+            //TEST: end
+
+            //TEST: die RMReservation before Prepare
+//            wc.reconnect();
+//            wc.dieRMAfterPrepare(ResourceManager.RMINameReservations);
+//            String custName = "Mikasa";
+//            int xid = wc.start();
+//            wc.newCustomer(xid, custName);
+//            wc.reserveRoom(xid, custName, "Tokyo");
+//            wc.commit(xid);
+            //TEST: end
+
+            //TEST: compound transactions: new customer -> reservation for new customer
+            wc.reconnect();
+            String custName = "Mikasa";
             int xid = wc.start();
-            int totalPrice = wc.queryCustomerBill(xid, custName);
+            wc.newCustomer(xid, custName);
+            wc.reserveRoom(xid, custName, "Tokyo");
             wc.commit(xid);
-            System.out.println(custName + "'s total price = " + totalPrice);
+            //TEST: end
+
 
             //TEST: FREE QUERY
 //            try {
