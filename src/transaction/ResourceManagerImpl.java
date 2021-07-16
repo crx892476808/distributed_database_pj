@@ -28,7 +28,21 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
     public static final String statusCommitted = "Committed";
     public static final String statusAborted = "Aborted";
 
+    protected static String RMlogDirPath;
+
     public static void main(String args[]) {
+        Properties prop = new Properties();
+        try
+        {
+            prop.load(new FileInputStream("../../conf/ddb.conf"));
+            RMlogDirPath = prop.getProperty("RMLogDirPath");
+            System.out.println("RM Log Dir Path = " + RMlogDirPath);
+        }
+        catch (Exception e1)
+        {
+            e1.printStackTrace();
+        }
+
         System.setSecurityManager(new RMISecurityManager());
 
 
@@ -418,7 +432,10 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
 
     protected HashSet loadTransactionLogs()
     {
-        File xidLog = new File("data/" + myRMIName +"_transactions.log");
+        File folder = new File(RMlogDirPath);
+        if (!folder.exists())
+            folder.mkdirs();
+        File xidLog = new File(RMlogDirPath + myRMIName +"_transactions.log");
         ObjectInputStream oin = null;
         try
         {
@@ -444,7 +461,10 @@ public class ResourceManagerImpl extends java.rmi.server.UnicastRemoteObject imp
 
     protected boolean storeTransactionLogs(HashSet xids)
     {
-        File xidLog = new File("data/" + myRMIName +"_transactions.log");
+        File folder = new File(RMlogDirPath);
+        if (!folder.exists())
+            folder.mkdirs();
+        File xidLog = new File(RMlogDirPath + myRMIName +"_transactions.log");
         xidLog.getParentFile().mkdirs();
         xidLog.getParentFile().mkdirs();
         ObjectOutputStream oout = null;

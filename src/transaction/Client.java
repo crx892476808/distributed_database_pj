@@ -218,10 +218,10 @@ public class Client {
             //TEST: end
 
             //TEST: FREE add
-            wc.reconnect();
-            int xid = wc.start();
-            wc.addRooms(xid, "81198",1000,1000);
-            wc.commit(xid);
+//            wc.reconnect();
+//            int xid = wc.start();
+//            wc.addRooms(xid, "81199",1000,1000);
+//            wc.commit(xid);
             //TEST: end
 
             //TEST: FREE QUERY
