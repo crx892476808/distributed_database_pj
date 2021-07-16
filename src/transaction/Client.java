@@ -91,7 +91,7 @@ public class Client {
             //TEST: TM failure before preparing
 //            wc.dieTMBeforePreparing();
 //            int xid = wc.start();
-//            wc.addFlight(xid, "12",12,12);
+//            wc.addCars(xid, "102",102,102);
 //            wc.commit(xid);
             //TEST: TM failure before preparing end
 
@@ -209,14 +209,20 @@ public class Client {
             //TEST: end
 
             //TEST: compound transactions: new customer -> reservation for new customer
-            wc.reconnect();
-            String custName = "Mikasa";
-            int xid = wc.start();
-            wc.newCustomer(xid, custName);
-            wc.reserveRoom(xid, custName, "Tokyo");
-            wc.commit(xid);
+//            wc.reconnect();
+//            String custName = "Mikasa";
+//            int xid = wc.start();
+//            wc.newCustomer(xid, custName);
+//            wc.reserveRoom(xid, custName, "Tokyo");
+//            wc.commit(xid);
             //TEST: end
 
+            //TEST: FREE add
+            wc.reconnect();
+            int xid = wc.start();
+            wc.addRooms(xid, "81198",1000,1000);
+            wc.commit(xid);
+            //TEST: end
 
             //TEST: FREE QUERY
 //            try {

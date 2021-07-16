@@ -4,6 +4,7 @@ import java.io.*;
 import java.rmi.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Properties;
 
 /**
  * Transaction Manager for the Distributed Travel Reservation System.
@@ -35,8 +36,20 @@ public class TransactionManagerImpl
 
     protected String dieTime = new String();
     protected  static String myRmiPort;
+    protected static String TMlogDirPath;
 
     public static void main(String args[]) {
+        Properties prop = new Properties();
+        try
+        {
+            prop.load(new FileInputStream("../../conf/ddb.conf"));
+            TMlogDirPath = prop.getProperty("TMLogDirPath");
+            System.out.println("TM Log Dir Path = " + TMlogDirPath);
+        }
+        catch (Exception e1)
+        {
+            e1.printStackTrace();
+        }
         System.setSecurityManager(new RMISecurityManager());
 
         String rmiPort = System.getProperty("rmiPort");
@@ -58,7 +71,7 @@ public class TransactionManagerImpl
     }
 
     public void recover() throws RemoteException {
-        File logDir = new File("transLog");
+        File logDir = new File(TMlogDirPath);
         if (!logDir.exists()) {
             logDir.mkdirs();
         }
@@ -176,6 +189,7 @@ public class TransactionManagerImpl
                 writeTransLog(xid, statusPreparing, transIdtoRMName.get(xid));
             }
             catch(Exception e){
+                e.printStackTrace();
                 allRMPrepared = false;
                 notPreparedRMName.add(rmName);
             }
@@ -375,10 +389,11 @@ public class TransactionManagerImpl
             String RMStatus = RMIname2RMwithStatus.get(keyName).rmStatus;
             logContent.put(keyName, RMStatus);
         }
-        File folder = new File("transLog");
+
+        File folder = new File(TMlogDirPath);
         if (!folder.exists())
             folder.mkdirs();
-        File transTMLog = new File("transLog/"+xid);
+        File transTMLog = new File(TMlogDirPath +xid);
         if(!transTMLog.exists())
             transTMLog.createNewFile();
         ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(transTMLog));
@@ -386,14 +401,14 @@ public class TransactionManagerImpl
     }
 
     public HashMap<String, String> readTransLog(int xid) throws IOException, ClassNotFoundException {
-        File transTMLog = new File("transLog/"+xid);
+        File transTMLog = new File(TMlogDirPath +xid);
         ObjectInputStream ois = new ObjectInputStream(new FileInputStream(transTMLog));
         HashMap<String, String> logContent = (HashMap<String, String>)ois.readObject();
         return logContent;
     }
 
     public void deleteTransLog(int xid) { // delete the transLog of transaction xid
-        File transTMLog = new File("transLog/"+xid);
+        File transTMLog = new File(TMlogDirPath +xid);
         if(transTMLog.exists())
             transTMLog.delete();
         System.out.println("come here for deleting translog");

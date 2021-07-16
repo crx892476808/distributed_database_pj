@@ -122,6 +122,7 @@ public class WorkflowControllerImpl
             flightprice = price;
         }
         catch (Exception e){ //rm die after enlist
+            e.printStackTrace();
             transToStatus.replace(xid, transStatusAborted);
             return false;
         }
