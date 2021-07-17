@@ -389,7 +389,6 @@ public class TransactionManagerImpl
             String RMStatus = RMIname2RMwithStatus.get(keyName).rmStatus;
             logContent.put(keyName, RMStatus);
         }
-
         File folder = new File(TMlogDirPath);
         if (!folder.exists())
             folder.mkdirs();

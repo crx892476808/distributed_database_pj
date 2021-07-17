@@ -151,7 +151,7 @@ public class Client {
 
             //TEST: add Flight
 //            int xid = wc.start();
-//            wc.addFlight(xid, "CA929", 400, 12000);
+//            wc.addFlight(xid, "test4", 400, 12000);
 //            wc.commit(xid);
             //TEST: add Flight end
 
@@ -217,11 +217,26 @@ public class Client {
 //            wc.commit(xid);
             //TEST: end
 
-            //TEST: FREE add
-//            wc.reconnect();
+            //TEST: WC abort(xid)
 //            int xid = wc.start();
-//            wc.addRooms(xid, "81199",1000,1000);
+//            wc.addRooms(xid,"Beijing", 1000,1000);
+//            wc.abort(xid);
+            //TEST: end
+
+            //TEST: fail delete Flight
+//            int xid = wc.start();
+//            if(wc.deleteFlight(xid, "test"))
+//                System.out.println("delete success");
 //            wc.commit(xid);
+            //TEST: end
+
+            //TEST: FREE add
+            wc.reconnect();
+            int xid = wc.start();
+            wc.addRooms(xid, "81200",1000,1000);
+            int res = wc.queryRooms(xid,"81200");
+            wc.commit(xid);
+            System.out.println(res);
             //TEST: end
 
             //TEST: FREE QUERY

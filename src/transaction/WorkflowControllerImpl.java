@@ -78,10 +78,6 @@ public class WorkflowControllerImpl
             throws RemoteException {
         String rmiPort = System.getProperty("rmiPort");
         try {
-            //rmFlights = (ResourceManager) Naming.lookup(rmiPort + ResourceManager.RMINameFlights);
-            //rmRooms = (ResourceManager) Naming.lookup(rmiPort + ResourceManager.RMINameRooms);
-            //rmCars = (ResourceManager) Naming.lookup(rmiPort + ResourceManager.RMINameCars);
-            //rmCustomers = (ResourceManager) Naming.lookup(rmiPort + ResourceManager.RMINameCustomers);
             transToStatus.put(xidCounter, transStatusOK);
             tm.start(xidCounter);
         }
@@ -105,6 +101,7 @@ public class WorkflowControllerImpl
     public void abort(int xid)
             throws RemoteException,
             InvalidTransactionException {
+        tm.abort(xid);
         return;
     }
 
@@ -118,8 +115,6 @@ public class WorkflowControllerImpl
             if(transToStatus.get(xid).equals(transStatusAborted))
                 return false;
             rmFlights.insert(xid, ResourceManager.TableNameFlights, new Flight(flightNum, price, numSeats, numSeats));
-            flightcounter += numSeats; //???
-            flightprice = price;
         }
         catch (Exception e){ //rm die after enlist
             e.printStackTrace();
@@ -136,15 +131,28 @@ public class WorkflowControllerImpl
         try {
             if(transToStatus.get(xid).equals(transStatusAborted))
                 return false;
-            rmFlights.delete(xid, ResourceManager.TableNameFlights, flightNum);
+            boolean canDelete = true;
+            ArrayList<Reservation> reservations = (ArrayList<Reservation>) rmReservations.query(xid, ResourceManager.TableNameReservations, Reservation.INDEX_RESVKEY, flightNum);
+            for(Reservation reservation : reservations){
+                if(reservation.getResvType() == Reservation.RESERVATION_TYPE_FLIGHT) {
+                    canDelete = false;
+                    break;
+                }
+            }
+            if(canDelete) {
+                rmFlights.delete(xid, ResourceManager.TableNameFlights, flightNum);
+                return true;
+            }
+            else{
+                transToStatus.replace(xid, transStatusAborted);
+                return false;
+            }
         }
         catch(Exception e){
+            e.printStackTrace();
             transToStatus.replace(xid, transStatusAborted);
             return false;
         }
-        flightcounter = 0; // ???
-        flightprice = 0;
-        return true;
     }
 
     public boolean addRooms(int xid, String location, int numRooms, int price)
@@ -452,7 +460,6 @@ public class WorkflowControllerImpl
             transToStatus.replace(xid, transStatusAborted);
             return false;
         }
-        flightcounter--;
         return true;
     }
 

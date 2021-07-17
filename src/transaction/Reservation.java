@@ -17,6 +17,10 @@ import java.io.Serializable;
 public class Reservation implements ResourceItem, Serializable {
     public static final String INDEX_CUSTNAME = "custName";
 
+    public static final String INDEX_RESVTYPE = "resvType";
+
+    public static final String INDEX_RESVKEY = "resvKey";
+
     public static final int RESERVATION_TYPE_FLIGHT = 1;
 
     public static final int RESERVATION_TYPE_HOTEL = 2;
@@ -48,6 +52,10 @@ public class Reservation implements ResourceItem, Serializable {
     public Object getIndex(String indexName) throws InvalidIndexException {
         if (indexName.equals(INDEX_CUSTNAME))
             return custName;
+        else if(indexName.equals(INDEX_RESVKEY))
+            return resvKey;
+        else if(indexName.equals(INDEX_RESVTYPE))
+            return resvType;
         else
             throw new InvalidIndexException(indexName);
     }
