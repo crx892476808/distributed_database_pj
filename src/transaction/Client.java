@@ -231,12 +231,12 @@ public class Client {
             //TEST: end
 
             //TEST: FREE add
-            wc.reconnect();
-            int xid = wc.start();
-            wc.addRooms(xid, "81200",1000,1000);
-            int res = wc.queryRooms(xid,"81200");
-            wc.commit(xid);
-            System.out.println(res);
+//            wc.reconnect();
+//            int xid = wc.start();
+//            wc.addRooms(xid, "81200",1000,1000);
+//            int res = wc.queryRooms(xid,"81200");
+//            wc.commit(xid);
+//            System.out.println(res);
             //TEST: end
 
             //TEST: FREE QUERY
@@ -254,7 +254,25 @@ public class Client {
 //            }
             //TEST: Free query end
 
+            //Formal Test: Normal Actions
+//            int xid = wc.start();
+//            wc.addFlight(xid, "MU5183",200,610);
+//            wc.addCars(xid, "Shanghai",200, 500);
+//            wc.addRooms(xid, "Shanghai", 300, 300);
+//            wc.newCustomer(xid,"Eren");
+//            wc.reserveFlight(xid,"Eren","MU5183");
+//            int totalCost = wc.queryCustomerBill(xid, "Eren");
+//            if(wc.commit(xid))
+//                System.out.println("From Client: commit successfully");
+//            System.out.println("totalCost = " + totalCost);
+            //Formal Test: end
 
+            //Formal Test: dieRMAfterEnlist
+            int xid = wc.start();
+            wc.dieRMAfterEnlist(ResourceManager.RMINameFlights);
+            wc.addFlight(xid,"CA1817",200,500);
+            wc.commit(xid);
+            //Formal Test: dieRMAfterEnlist
 
 //            example code for clinets
 //            if (!wc.addFlight(xid, "347", 230, 999)) {
