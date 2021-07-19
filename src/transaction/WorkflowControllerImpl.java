@@ -90,12 +90,16 @@ public class WorkflowControllerImpl
             throws IOException,
             TransactionAbortedException,
             InvalidTransactionException, ClassNotFoundException {
-        if(transToStatus.get(xid).equals(transStatusOK))
-            tm.commit(xid);
-        else
+        if(transToStatus.get(xid).equals(transStatusOK)) {
+                System.out.println("WC Committing");
+                return tm.commit(xid);
+        }
+        else {
             tm.abort(xid);
-        System.out.println("WC Committing");
-        return true;
+            return false;
+        }
+        //System.out.println("WC Committing");
+        //return true;
     }
 
     public void abort(int xid)

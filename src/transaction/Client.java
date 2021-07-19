@@ -268,11 +268,24 @@ public class Client {
             //Formal Test: end
 
             //Formal Test: dieRMAfterEnlist
-            int xid = wc.start();
-            wc.dieRMAfterEnlist(ResourceManager.RMINameFlights);
-            wc.addFlight(xid,"CA1817",200,500);
-            wc.commit(xid);
+//            int xid = wc.start();
+//            wc.dieRMAfterEnlist(ResourceManager.RMINameFlights);
+//            wc.addFlight(xid,"CA1817",200,500);
+//            if(wc.commit(xid))
+//                System.out.println("From Client: commit successfully");
+//            else
+//                System.out.println("From Client: commit fail");
             //Formal Test: dieRMAfterEnlist
+
+            //Formal Test: dieRMBeforePrepare
+            int xid = wc.start();
+            wc.dieRMBeforePrepare(ResourceManager.RMINameCars);
+            wc.addCars(xid, "Nanjing", 300,320);
+            if(wc.commit(xid))
+                System.out.println("From Client: commit successfully");
+            else
+                System.out.println("From Client: commit fail");
+            //Formal Test: end
 
 //            example code for clinets
 //            if (!wc.addFlight(xid, "347", 230, 999)) {
