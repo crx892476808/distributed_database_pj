@@ -90,12 +90,16 @@ public class WorkflowControllerImpl
             throws IOException,
             TransactionAbortedException,
             InvalidTransactionException, ClassNotFoundException {
-        if(transToStatus.get(xid).equals(transStatusOK)) {
+        try {
+            if (transToStatus.get(xid).equals(transStatusOK)) {
                 System.out.println("WC Committing");
                 return tm.commit(xid);
+            } else {
+                tm.abort(xid);
+                return false;
+            }
         }
-        else {
-            tm.abort(xid);
+        catch (Exception e){
             return false;
         }
         //System.out.println("WC Committing");
@@ -166,7 +170,10 @@ public class WorkflowControllerImpl
         try {
             if(transToStatus.get(xid).equals(transStatusAborted))
                 return false;
-            rmRooms.insert(xid, ResourceManager.TableNameRooms, new Room(location, price, numRooms, numRooms));
+            if(!rmRooms.insert(xid, ResourceManager.TableNameRooms, new Room(location, price, numRooms, numRooms))){
+                transToStatus.replace(xid, transStatusAborted);
+                return false;
+            }
         }
         catch (Exception e){
             transToStatus.replace(xid, transStatusAborted);
@@ -704,7 +711,7 @@ public class WorkflowControllerImpl
         if(who.equals( rmCars.getID()))
             rmCars.setDieTime("BeforeCommit");
         else if (who.equals(rmCustomers.getID()))
-            rmCars.setDieTime("BeforeCommit");
+            rmCustomers.setDieTime("BeforeCommit");
         else if(who.equals(rmFlights.getID()))
             rmFlights.setDieTime("BeforeCommit");
         else if(who.equals(rmRooms.getID()))

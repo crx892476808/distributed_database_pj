@@ -150,6 +150,7 @@ public class Client {
             //TEST : add Customer end
 
             //TEST: add Flight
+//            wc.reconnect();
 //            int xid = wc.start();
 //            wc.addFlight(xid, "test4", 400, 12000);
 //            wc.commit(xid);
@@ -255,17 +256,32 @@ public class Client {
             //TEST: Free query end
 
             //Formal Test: Normal Actions
-//            int xid = wc.start();
+            //wc.reconnect();
+            //int xid = wc.start();
 //            wc.addFlight(xid, "MU5183",200,610);
 //            wc.addCars(xid, "Shanghai",200, 500);
 //            wc.addRooms(xid, "Shanghai", 300, 300);
 //            wc.newCustomer(xid,"Eren");
 //            wc.reserveFlight(xid,"Eren","MU5183");
-//            int totalCost = wc.queryCustomerBill(xid, "Eren");
+            //int totalCost = wc.queryCustomerBill(xid, "Eren");
 //            if(wc.commit(xid))
 //                System.out.println("From Client: commit successfully");
-//            System.out.println("totalCost = " + totalCost);
+            //System.out.println("totalCost = " + totalCost);
             //Formal Test: end
+
+            //Formal Test: Normal Actions2
+//            int xid = wc.start();
+//            wc.newCustomer(xid, "Mikasa");
+//            wc.reserveFlight(xid,"Mikasa","MU5183");
+//            wc.reserveRoom(xid,"Mikasa","Shanghai");
+//            wc.reserveCar(xid,"Mikasa","Shanghai");
+//            int totalCost = wc.queryCustomerBill(xid,"Mikasa");
+//            if(wc.commit(xid)){
+//                System.out.println("From Client: commit successfully");
+//                System.out.println("totalCost = " + totalCost);
+//            }
+            //Formal Test : end
+
 
             //Formal Test: dieRMAfterEnlist
 //            int xid = wc.start();
@@ -278,11 +294,122 @@ public class Client {
             //Formal Test: dieRMAfterEnlist
 
             //Formal Test: dieRMBeforePrepare
+//            wc.reconnect();
+//            int xid = wc.start();
+//            wc.dieRMBeforePrepare(ResourceManager.RMINameCars);
+//            //wc.addCars(xid, "Nanjing", 300,320);
+//            wc.addCars(xid,"Guizhou",200,300);
+//            if(wc.commit(xid))
+//                System.out.println("From Client: commit successfully");
+//            else
+//                System.out.println("From Client: commit fail");
+            //Formal Test: end
+
+            //Formal Test: dieRMAfterPrepare
+//            int xid = wc.start();
+//            wc.dieRMAfterPrepare(ResourceManager.RMINameRooms);
+//            wc.addRooms(xid,"Nanjing",400,380);
+//            if(wc.commit(xid))
+//                System.out.println("FromCLient: commit successfuly");
+//            else
+//                System.out.println("From Client: commit fail");
+            //Formal Test: end
+
+            //Formal Test: dieRMBeforeCommit
+//            wc.reconnect();
+//            int xid = wc.start();
+//            wc.dieRMBeforeCommit(ResourceManager.RMINameCars);
+//            wc.addCars(xid,"Guangzhou",300,300);
+//            if(wc.commit(xid))
+//                System.out.println("From CLient: commit successfuly");
+//            else
+//                System.out.println("From Client: commit fail");
+            //Formal Test: end
+
+            //Formal Test: dieRMBeforeCommit after recovering
+//            wc.reconnect();
+//            int xid = wc.start();
+//            int remainCars =  wc.queryCars(xid,"Guangzhou");
+//            if(wc.commit(xid)) {
+//                System.out.println("From CLient: commit successfuly");
+//                System.out.println("Guangzhou car number = " + remainCars);
+//            }
+//            else
+//                System.out.println("From Client: commit fail");
+            //Formal Test: end
+
+            //Formal Test: dieRMBeforeAbort
+//            wc.reconnect();
+//            wc.dieRMBeforeAbort(ResourceManager.RMINameCars);
+//            int xid = wc.start();
+//            wc.addCars(xid,"Shenzhen",700,700);
+//            wc.abort(xid);
+            //Formal Test: end
+
+            //Formal Test: dieTMBeforePreparing
+//            wc.reconnect();
+//            wc.dieTMBeforePreparing();
+//            int xid = wc.start();
+//            wc.addRooms(xid,"Xuzhou",500,200);
+//            if(wc.commit(xid))
+//                System.out.println("From CLient: commit successfuly");
+//            else
+//                System.out.println("From Client: commit fail");
+            //Formal Test: end
+
+            //Formal Test: dieTMBeforeCommit
+//            wc.reconnect();
+//            wc.dieTMBeforeCommit();
+//            int xid = wc.start();
+//            wc.addCars(xid,"Hefei",500,200);
+//            if(wc.commit(xid))
+//                System.out.println("From CLient: commit successfuly");
+//            else
+//                System.out.println("From Client: commit fail");
+            //Formal Test: end
+
+            //Formal Test: dieTMBeforeCommit After Recovering
+//            wc.reconnect();
+//            int xid = wc.start();
+//            int remainCars = wc.queryCars(xid, "Hefei");
+//            if(wc.commit(xid)) {
+//                System.out.println("From CLient: commit successfuly");
+//                System.out.println("Remain Cars = " + remainCars);
+//            }
+//            else
+//                System.out.println("From Client: commit fail");
+            //Formal Test: end
+
+            //Formal Test: dieTMAfterCommit
+//            wc.reconnect();
+//            wc.dieTMBeforeCommit();
+//            int xid = wc.start();
+//            wc.addRooms(xid,"Chengdu",600,300);
+//            if(wc.commit(xid))
+//                System.out.println("From CLient: commit successfuly");
+//            else
+//                System.out.println("From Client: commit fail");
+            //Formal Test: end
+
+            //Formal Test: dieTMAfterCommit After recovering
+//            wc.reconnect();
+//            int xid = wc.start();
+//            int remainRooms = wc.queryRooms(xid,"Chengdu");
+//            if(wc.commit(xid)) {
+//                System.out.println("Remain Rooms = " + remainRooms);
+//                System.out.println("From CLient: commit successfuly");
+//            }
+//            else
+//                System.out.println("From Client: commit fail");
+            //Formal Test: end
+
+            //Formal Test: error operations
+            wc.reconnect();
             int xid = wc.start();
-            wc.dieRMBeforePrepare(ResourceManager.RMINameCars);
-            wc.addCars(xid, "Nanjing", 300,320);
+            wc.addRooms(xid,"Chengdu",800,900);
+            // should fail, since the data item with Primary key "Chengdu" has existed
             if(wc.commit(xid))
-                System.out.println("From Client: commit successfully");
+                System.out.println("From CLient: commit successfuly");
             else
                 System.out.println("From Client: commit fail");
             //Formal Test: end
